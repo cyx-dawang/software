@@ -1,92 +1,46 @@
-# 运动与健康系统 - 模块A
+# 运动与健康系统 - 模块A桌面软件
 
-模块 A 覆盖用户账户与健康档案功能，用于实验六“编码与测试”的代码提交。
+这是实验六“编码与测试”的模块 A 实现，形式为 Java Swing 桌面软件，不是网站或后端服务。
 
-## 功能范围
+## 模块范围
 
 - 手机号注册与登录
 - 验证码模拟发送与校验
-- 用户资料查询与修改
-- 健康档案创建、查询与修改
-- BMI 自动计算与健康档案合法性校验
-- 基于 Java 8 标准库的轻量 HTTP 接口
+- 当前用户状态显示
+- 个人资料查询与修改
+- 健康档案录入、查询与修改
+- BMI 自动计算和体重状态判断
+- 健康档案输入合法性校验
+
+## 技术说明
+
+- 开发语言：Java
+- 界面技术：Java Swing
+- 数据存储：内存存储，适合课堂演示和模块测试
+- 依赖管理：无第三方依赖，不需要 Maven 或 Gradle
 
 ## 运行环境
 
 - JDK 8 或以上
 - Windows PowerShell
-- 不依赖 Maven、Gradle 或第三方库
 
-## 编译与运行
+## 编译和启动
 
 ```powershell
 .\scripts\build.ps1
 .\scripts\run.ps1
 ```
 
-服务默认监听 `http://localhost:8080`。
+启动后会打开“运动与健康系统 - 模块A”桌面窗口。
 
-## 接口说明
+## 使用流程
 
-### 健康检查
-
-```http
-GET /health
-```
-
-### 发送验证码
-
-```http
-POST /auth/send-code
-
-mobile=13800138000
-```
-
-演示环境固定返回验证码 `123456`。
-
-### 注册
-
-```http
-POST /auth/register
-
-mobile=13800138000&code=123456&password=Pass1234&nickname=zhangsan
-```
-
-### 登录
-
-```http
-POST /auth/login
-
-mobile=13800138000&password=Pass1234
-```
-
-### 查询用户资料
-
-```http
-GET /users/{userId}
-```
-
-### 修改用户资料
-
-```http
-PUT /users/{userId}
-
-nickname=newName&avatarUrl=https://example.com/a.png
-```
-
-### 保存健康档案
-
-```http
-PUT /profiles/{userId}
-
-gender=MALE&birthDate=2003-05-20&heightCm=175&weightKg=68&activityLevel=MODERATE
-```
-
-### 查询健康档案
-
-```http
-GET /profiles/{userId}
-```
+1. 在“注册登录”页输入手机号、密码、昵称。
+2. 点击“发送验证码”，系统会生成演示验证码 `123456`。
+3. 点击“注册”，注册成功后自动成为当前用户。
+4. 在“个人资料”页修改昵称和头像地址。
+5. 在“健康档案”页填写性别、出生日期、身高、体重和活动水平。
+6. 点击“保存健康档案”，软件会显示 BMI 和体重状态。
 
 ## 测试
 
@@ -94,4 +48,4 @@ GET /profiles/{userId}
 .\scripts\test.ps1
 ```
 
-测试覆盖账户注册登录、重复注册、档案校验、BMI 计算和资料更新。
+测试覆盖注册登录、重复手机号、资料修改、健康档案校验、BMI 计算。

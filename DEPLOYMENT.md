@@ -2,68 +2,65 @@
 
 ## 1. 环境准备
 
-安装 JDK 8 或以上，并确认 PowerShell 中可以执行：
+安装 JDK 8 或以上，并确认命令可用：
 
 ```powershell
 java -version
 javac -version
 ```
 
-本项目只使用 Java 标准库，不需要安装 Maven、Gradle、MySQL 或 Redis。
+本软件不需要数据库、中间件、Web 服务器、Maven 或 Gradle。
 
-## 2. 编译项目
+## 2. 编译
 
-进入项目根目录：
+进入项目目录：
 
 ```powershell
 cd C:\Users\ROG\Desktop\SoftwareEngineering\实验六\health-module-a
 .\scripts\build.ps1
 ```
 
-编译产物输出到 `out\main`。
+编译后的 class 文件位于 `out\main`。
 
-## 3. 启动服务
+## 3. 启动桌面软件
 
 ```powershell
 .\scripts\run.ps1
 ```
 
-启动成功后访问：
+启动后会弹出桌面窗口。窗口包含三个页签：
 
-```http
-http://localhost:8080/health
-```
+- 注册登录
+- 个人资料
+- 健康档案
 
-## 4. 执行测试
+## 4. 功能演示建议
+
+注册演示：
+
+- 手机号：`13800138000`
+- 验证码：点击“发送验证码”后自动填入 `123456`
+- 密码：`Pass1234`
+- 昵称：`alice`
+
+健康档案演示：
+
+- 性别：`FEMALE`
+- 出生日期：`2003-01-01`
+- 身高：`165`
+- 体重：`55`
+- 活动水平：`MODERATE`
+
+保存后软件会显示 BMI 结果和体重状态。
+
+## 5. 测试
 
 ```powershell
 .\scripts\test.ps1
 ```
 
-看到 `All module A tests passed.` 表示模块 A 的核心测试通过。
+出现以下输出表示测试通过：
 
-## 5. 示例调用
-
-发送验证码：
-
-```powershell
-Invoke-RestMethod -Method Post -Uri http://localhost:8080/auth/send-code -Body "mobile=13800138000"
-```
-
-注册：
-
-```powershell
-Invoke-RestMethod -Method Post -Uri http://localhost:8080/auth/register -Body "mobile=13800138000&code=123456&password=Pass1234&nickname=alice"
-```
-
-登录：
-
-```powershell
-Invoke-RestMethod -Method Post -Uri http://localhost:8080/auth/login -Body "mobile=13800138000&password=Pass1234"
-```
-
-保存健康档案：
-
-```powershell
-Invoke-RestMethod -Method Put -Uri http://localhost:8080/profiles/1001 -Body "gender=FEMALE&birthDate=2002-06-01&heightCm=165&weightKg=55&activityLevel=MODERATE"
+```text
+All module A tests passed.
 ```
