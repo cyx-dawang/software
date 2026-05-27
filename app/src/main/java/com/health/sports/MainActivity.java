@@ -20,18 +20,36 @@ import com.health.sports.model.ApiException;
 import com.health.sports.model.Gender;
 import com.health.sports.model.HealthProfile;
 import com.health.sports.model.User;
+import com.health.sports.model.WorkoutRecord;
+import com.health.sports.model.WorkoutStatus;
 import com.health.sports.feature.account.AccountService;
 import com.health.sports.feature.profile.HealthProfileService;
 import com.health.sports.feature.account.PasswordHasher;
+import com.health.sports.feature.workout.WorkoutService;
 import com.health.sports.store.InMemoryStore;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements WorkoutService.WorkoutUpdateListener {
     private AccountService accountService;
     private HealthProfileService profileService;
+    private WorkoutService workoutService;
     private User currentUser;
 
     private LinearLayout content;
     private TextView currentUserView;
+
+    private LinearLayout workoutDataPanel;
+    private TextView workoutStatusView;
+    private TextView workoutDistanceView;
+    private TextView workoutPaceView;
+    private TextView workoutDurationView;
+    private TextView workoutCaloriesView;
+    private TextView workoutGpsView;
+    private Button workoutPauseBtn;
+    private Button workoutResumeBtn;
+    private Button workoutEndBtn;
+    private Button workoutStartBtn;
+    private LinearLayout workoutControls;
+    private LinearLayout workoutReportContainer;
 
     private EditText registerMobile;
     private EditText registerCode;
@@ -55,6 +73,8 @@ public class MainActivity extends Activity {
         InMemoryStore store = new InMemoryStore();
         accountService = new AccountService(store, new PasswordHasher());
         profileService = new HealthProfileService(store, accountService);
+        workoutService = new WorkoutService(store, accountService, profileService);
+        workoutService.setListener(this);
         setContentView(createRootView());
         showAccountPage();
     }
@@ -89,13 +109,16 @@ public class MainActivity extends Activity {
         Button account = navButton("账户");
         Button user = navButton("资料");
         Button profile = navButton("档案");
+        Button workout = navButton("运动");
         nav.addView(account, weightParams());
         nav.addView(user, weightParams());
         nav.addView(profile, weightParams());
+        nav.addView(workout, weightParams());
 
         account.setOnClickListener(v -> showAccountPage());
         user.setOnClickListener(v -> showUserPage());
         profile.setOnClickListener(v -> showProfilePage());
+        workout.setOnClickListener(v -> showWorkoutPage());
 
         ScrollView scrollView = new ScrollView(this);
         content = new LinearLayout(this);
@@ -219,6 +242,301 @@ public class MainActivity extends Activity {
         loadButton.setOnClickListener(v -> runAction(() -> showProfile(profileService.getProfile(requireLogin().getUserId()))));
     }
 
+    private void showWorkoutPage() {
+        content.removeAllViews();
+        WorkoutStatus status = workoutService.getStatus();
+
+        if (status == WorkoutStatus.COMPLETED) {
+            return;
+        }
+
+        if (status == WorkoutStatus.IDLE) {
+            content.addView(sectionTitle("户外跑步"));
+            content.addView(label("准备开始一段新的跑步旅程"));
+
+            workoutStartBtn = primaryButton("开始跑步");
+            workoutStartBtn.setBackgroundColor(Color.rgb(0, 229, 178));
+            workoutStartBtn.setTextColor(Color.rgb(30, 42, 94));
+            content.addView(workoutStartBtn);
+
+            workoutStartBtn.setOnClickListener(v -> runAction(() -> {
+                User user = requireLogin();
+                workoutService.startWorkout(user.getUserId());
+                refreshWorkoutPage();
+            }));
+            return;
+        }
+
+        content.addView(sectionTitle(status == WorkoutStatus.PAUSED ? "运动已暂停" : "运动进行中"));
+
+        workoutGpsView = new TextView(this);
+        workoutGpsView.setText("GPS 信号: 模拟中 · 精度 3-7m");
+        workoutGpsView.setTextColor(Color.rgb(102, 102, 102));
+        workoutGpsView.setTextSize(12);
+        workoutGpsView.setPadding(0, 0, 0, dp(10));
+        content.addView(workoutGpsView);
+
+        workoutDataPanel = new LinearLayout(this);
+        workoutDataPanel.setOrientation(LinearLayout.VERTICAL);
+        content.addView(workoutDataPanel);
+
+        workoutDistanceView = dataMetric("总距离", "-- km", Color.rgb(0, 229, 178));
+        workoutDurationView = dataMetric("时长", "--:--", Color.rgb(30, 42, 94));
+        workoutPaceView = dataMetric("平均配速", "--'--\"", Color.rgb(255, 127, 80));
+        workoutCaloriesView = dataMetric("消耗", "-- kcal", Color.rgb(100, 100, 100));
+        workoutStatusView = new TextView(this);
+        workoutStatusView.setTextSize(13);
+        workoutStatusView.setPadding(0, dp(8), 0, dp(4));
+
+        workoutDataPanel.addView(workoutDistanceView);
+        workoutDataPanel.addView(workoutDurationView);
+        workoutDataPanel.addView(workoutPaceView);
+        workoutDataPanel.addView(workoutCaloriesView);
+        workoutDataPanel.addView(workoutStatusView);
+
+        workoutControls = new LinearLayout(this);
+        workoutControls.setOrientation(LinearLayout.HORIZONTAL);
+        content.addView(workoutControls);
+
+        WorkoutRecord rec = workoutService.getCurrentRecord();
+        if (status == WorkoutStatus.RUNNING) {
+            workoutPauseBtn = secondaryButton("暂停");
+            workoutEndBtn = dangerButton("结束");
+            workoutControls.addView(workoutPauseBtn, weightParams());
+            workoutControls.addView(workoutEndBtn, weightParams());
+
+            workoutPauseBtn.setOnClickListener(v -> runAction(() -> {
+                workoutService.pauseWorkout();
+                refreshWorkoutPage();
+            }));
+            workoutEndBtn.setOnClickListener(v -> runAction(() -> {
+                workoutService.pauseWorkout();
+                showEndConfirmDialog();
+            }));
+
+            updateWorkoutLiveData(rec, rec.getAvgPaceSecondsPerKm());
+        } else if (status == WorkoutStatus.PAUSED) {
+            workoutResumeBtn = primaryButton("继续");
+            workoutResumeBtn.setBackgroundColor(Color.rgb(0, 229, 178));
+            workoutResumeBtn.setTextColor(Color.rgb(30, 42, 94));
+            workoutEndBtn = dangerButton("结束");
+            workoutControls.addView(workoutResumeBtn, weightParams());
+            workoutControls.addView(workoutEndBtn, weightParams());
+
+            workoutResumeBtn.setOnClickListener(v -> runAction(() -> {
+                workoutService.resumeWorkout();
+                refreshWorkoutPage();
+            }));
+            workoutEndBtn.setOnClickListener(v -> runAction(() -> showEndConfirmDialog()));
+
+            updateWorkoutLiveData(rec, rec.getAvgPaceSecondsPerKm());
+        }
+    }
+
+    private void showEndConfirmDialog() {
+        content.removeAllViews();
+        content.addView(sectionTitle("确认结束运动"));
+        content.addView(label("确定要结束本次运动吗？"));
+
+        LinearLayout buttons = new LinearLayout(this);
+        buttons.setOrientation(LinearLayout.HORIZONTAL);
+
+        Button confirmBtn = dangerButton("确定结束");
+        Button cancelBtn = secondaryButton("取消");
+
+        buttons.addView(cancelBtn, weightParams());
+        buttons.addView(confirmBtn, weightParams());
+        content.addView(buttons);
+
+        confirmBtn.setOnClickListener(v -> runAction(() -> {
+            WorkoutRecord finished = workoutService.endWorkout();
+            showWorkoutReportPage(finished);
+        }));
+        cancelBtn.setOnClickListener(v -> runAction(() -> refreshWorkoutPage()));
+    }
+
+    private void showWorkoutReportPage(WorkoutRecord record) {
+        content.removeAllViews();
+        content.addView(sectionTitle("运动总结报告"));
+
+        double distanceKm = record.getTotalDistanceKm();
+
+        TextView dateView = new TextView(this);
+        dateView.setText("运动记录 #" + record.getRecordId());
+        dateView.setTextColor(Color.rgb(102, 102, 102));
+        dateView.setTextSize(13);
+        dateView.setPadding(0, 0, 0, dp(12));
+        content.addView(dateView);
+
+        workoutReportContainer = new LinearLayout(this);
+        workoutReportContainer.setOrientation(LinearLayout.VERTICAL);
+        content.addView(workoutReportContainer);
+
+        LinearLayout distanceCard = reportCard("总距离", String.format("%.2f", distanceKm) + " km", Color.rgb(0, 229, 178));
+        LinearLayout durationCard = reportCard("总时长", record.formatDuration(), Color.rgb(30, 42, 94));
+        LinearLayout paceCard = reportCard("平均配速", record.formatPace(), Color.rgb(255, 127, 80));
+        LinearLayout caloriesCard = reportCard("消耗卡路里", (int) record.getTotalCalories() + " kcal", Color.rgb(100, 100, 100));
+
+        workoutReportContainer.addView(distanceCard);
+        workoutReportContainer.addView(durationCard);
+        workoutReportContainer.addView(paceCard);
+        workoutReportContainer.addView(caloriesCard);
+
+        LinearLayout reportButtons = new LinearLayout(this);
+        reportButtons.setOrientation(LinearLayout.HORIZONTAL);
+
+        Button saveBtn = primaryButton("保存记录");
+        saveBtn.setBackgroundColor(Color.rgb(0, 229, 178));
+        saveBtn.setTextColor(Color.rgb(30, 42, 94));
+        Button discardBtn = dangerButton("丢弃记录");
+        Button againBtn = secondaryButton("再跑一次");
+
+        reportButtons.addView(saveBtn, weightParams());
+        reportButtons.addView(discardBtn, weightParams());
+        content.addView(reportButtons);
+        content.addView(againBtn);
+
+        saveBtn.setOnClickListener(v -> runAction(() -> {
+            toast("已保存至历史记录");
+            showWorkoutPage();
+        }));
+        discardBtn.setOnClickListener(v -> runAction(() -> {
+            workoutService.discardWorkout();
+            toast("记录已丢弃");
+            showWorkoutPage();
+        }));
+        againBtn.setOnClickListener(v -> runAction(() -> {
+            showWorkoutPage();
+        }));
+    }
+
+    private void refreshWorkoutPage() {
+        showWorkoutPage();
+    }
+
+    private void updateWorkoutLiveData(WorkoutRecord record, double currentPace) {
+        if (workoutDistanceView != null) {
+            workoutDistanceView.setText("总距离\n" + String.format("%.2f", record.getTotalDistanceKm()) + " km");
+        }
+        if (workoutDurationView != null) {
+            workoutDurationView.setText("时长\n" + record.formatDuration());
+        }
+        if (workoutPaceView != null) {
+            String paceStr = currentPace > 0 ? formatPace(currentPace) : "--'--\"";
+            workoutPaceView.setText("平均配速\n" + paceStr);
+        }
+        if (workoutCaloriesView != null) {
+            workoutCaloriesView.setText("消耗\n" + (int) record.getTotalCalories() + " kcal");
+        }
+        if (workoutStatusView != null) {
+            double km = record.getTotalDistanceKm();
+            String hint;
+            if (km < 1) {
+                hint = "热身阶段，加油！";
+            } else if (km < 3) {
+                hint = "保持节奏，已跑 " + String.format("%.1f", km) + " km";
+            } else if (km < 5) {
+                hint = "突破 3 公里！继续坚持";
+            } else {
+                hint = "太棒了！已跑 " + String.format("%.1f", km) + " km";
+            }
+            workoutStatusView.setText(hint);
+        }
+    }
+
+    @Override
+    public void onTick(WorkoutRecord record, double currentPace) {
+        runOnUiThread(() -> updateWorkoutLiveData(record, currentPace));
+    }
+
+    @Override
+    public void onStateChanged(WorkoutStatus status) {
+        if (status == WorkoutStatus.COMPLETED) {
+            return;
+        }
+        runOnUiThread(this::refreshWorkoutPage);
+    }
+
+    private String formatPace(double secondsPerKm) {
+        if (secondsPerKm <= 0) {
+            return "--'--\"";
+        }
+        int minutes = (int) (secondsPerKm / 60);
+        int seconds = (int) (secondsPerKm % 60);
+        return minutes + "'" + String.format("%02d", seconds) + "\"";
+    }
+
+    private TextView dataMetric(String label, String value, int color) {
+        TextView view = new TextView(this);
+        view.setText(label + "\n" + value);
+        view.setTextColor(color);
+        view.setTextSize(16);
+        view.setPadding(dp(12), dp(10), dp(12), dp(10));
+        view.setBackgroundColor(Color.WHITE);
+        view.setLayoutParams(blockParams());
+        return view;
+    }
+
+    private LinearLayout reportCard(String label, String value, int color) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+
+        TextView labelView = new TextView(this);
+        labelView.setText(label);
+        labelView.setTextColor(Color.rgb(102, 102, 102));
+        labelView.setTextSize(13);
+        labelView.setPadding(dp(12), dp(12), dp(12), dp(4));
+        labelView.setBackgroundColor(Color.WHITE);
+
+        TextView valueView = new TextView(this);
+        valueView.setText(value);
+        valueView.setTextColor(color);
+        valueView.setTextSize(28);
+        valueView.setPadding(dp(12), 0, dp(12), dp(14));
+        valueView.setBackgroundColor(Color.WHITE);
+
+        card.addView(labelView);
+        card.addView(valueView);
+        card.setLayoutParams(reportCardParams());
+        return card;
+    }
+
+    private LinearLayout.LayoutParams reportCardParams() {
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
+        params.setMargins(0, dp(6), 0, dp(8));
+        return params;
+    }
+
+    private Button secondaryButton(String text) {
+        Button button = new Button(this);
+        button.setText(text);
+        button.setTextColor(Color.rgb(29, 122, 140));
+        button.setAllCaps(false);
+        button.setBackgroundColor(Color.rgb(220, 237, 240));
+        button.setLayoutParams(blockParams());
+        return button;
+    }
+
+    private Button dangerButton(String text) {
+        Button button = new Button(this);
+        button.setText(text);
+        button.setTextColor(Color.WHITE);
+        button.setAllCaps(false);
+        button.setBackgroundColor(Color.rgb(231, 76, 60));
+        button.setLayoutParams(blockParams());
+        return button;
+    }
+
+    private void runAction(Action action) {
+        try {
+            action.run();
+        } catch (ApiException e) {
+            toast(e.getMessage());
+        } catch (Exception e) {
+            toast("输入有误：" + e.getMessage());
+        }
+    }
+
     private void setCurrentUser(User user) {
         currentUser = user;
         currentUserView.setText("当前用户：" + user.getNickname() + "  ID：" + user.getUserId());
@@ -245,16 +563,6 @@ public class MainActivity extends Activity {
                 + "\n活动水平：" + profile.getActivityLevel()
                 + "\nBMI：" + profile.calcBMI()
                 + "\n状态：" + profile.bmiLevel());
-    }
-
-    private void runAction(Action action) {
-        try {
-            action.run();
-        } catch (ApiException e) {
-            toast(e.getMessage());
-        } catch (Exception e) {
-            toast("输入有误：" + e.getMessage());
-        }
     }
 
     private TextView sectionTitle(String text) {
