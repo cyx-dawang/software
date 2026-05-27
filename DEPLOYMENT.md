@@ -1,66 +1,41 @@
 # 安装部署说明
 
-## 1. 环境准备
+## 1. 开发环境
 
-安装 JDK 8 或以上，并确认命令可用：
+- Android Studio
+- JDK 17，Android Studio 自带 JBR 即可
+- Android SDK Platform 35
+- Windows PowerShell
 
-```powershell
-java -version
-javac -version
-```
+## 2. 导入项目
 
-本软件不需要数据库、中间件、Web 服务器、Maven 或 Gradle。
+1. 打开 Android Studio。
+2. 选择 `Open`。
+3. 选择本仓库根目录：`C:\Users\ROG\Desktop\SoftwareEngineering\实验六\health-module-a`。
+4. 等待 Gradle Sync 完成。
 
-## 2. 编译
-
-进入项目目录：
-
-```powershell
-cd C:\Users\ROG\Desktop\SoftwareEngineering\实验六\health-module-a
-.\scripts\build.ps1
-```
-
-编译后的 class 文件位于 `out\main`。
-
-## 3. 启动桌面软件
+## 3. 编译 APK
 
 ```powershell
-.\scripts\run.ps1
+.\gradlew.bat :app:assembleDebug
 ```
 
-启动后会弹出桌面窗口。窗口包含三个页签：
-
-- 注册登录
-- 个人资料
-- 健康档案
-
-## 4. 功能演示建议
-
-注册演示：
-
-- 手机号：`13800138000`
-- 验证码：点击“发送验证码”后自动填入 `123456`
-- 密码：`Pass1234`
-- 昵称：`alice`
-
-健康档案演示：
-
-- 性别：`FEMALE`
-- 出生日期：`2003-01-01`
-- 身高：`165`
-- 体重：`55`
-- 活动水平：`MODERATE`
-
-保存后软件会显示 BMI 结果和体重状态。
-
-## 5. 测试
-
-```powershell
-.\scripts\test.ps1
-```
-
-出现以下输出表示测试通过：
+编译产物：
 
 ```text
-All module A tests passed.
+app\build\outputs\apk\debug\app-debug.apk
 ```
+
+## 4. 安装运行
+
+连接 Android 手机或启动模拟器后执行：
+
+```powershell
+.\gradlew.bat :app:installDebug
+```
+
+也可以在 Android Studio 中点击运行按钮启动 `app`。
+
+## 5. 模块说明
+
+模块 A 当前使用内存存储模拟服务端数据，便于单人完成编码和课堂演示。后续与其他组员联调时，可以将 `service` 层替换为 HTTP API 调用，对接 Spring Boot 后端的认证服务和档案服务。

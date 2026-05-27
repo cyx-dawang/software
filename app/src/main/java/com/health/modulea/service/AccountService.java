@@ -28,14 +28,14 @@ public class AccountService {
     public User register(String mobile, String code, String password, String nickname) {
         validateMobile(mobile);
         validatePassword(password);
-        if (nickname == null || nickname.trim().isEmpty()) {
+        if (nickname == null || nickname.trim().length() == 0) {
             throw new ApiException(400, "昵称不能为空");
         }
         if (store.mobileExists(mobile)) {
             throw new ApiException(409, "手机号已注册");
         }
-        String savedCode = store.findVerificationCode(mobile).orElse("");
-        if (!savedCode.equals(code)) {
+        String savedCode = store.findVerificationCode(mobile);
+        if (savedCode == null || !savedCode.equals(code)) {
             throw new ApiException(400, "验证码错误");
         }
 
@@ -46,8 +46,10 @@ public class AccountService {
 
     public User login(String mobile, String password) {
         validateMobile(mobile);
-        User user = store.findUserByMobile(mobile)
-                .orElseThrow(() -> new ApiException(404, "用户不存在"));
+        User user = store.findUserByMobile(mobile);
+        if (user == null) {
+            throw new ApiException(404, "用户不存在");
+        }
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new ApiException(403, "用户状态不可登录");
         }
@@ -58,8 +60,11 @@ public class AccountService {
     }
 
     public User getUser(long userId) {
-        return store.findUserById(userId)
-                .orElseThrow(() -> new ApiException(404, "用户不存在"));
+        User user = store.findUserById(userId);
+        if (user == null) {
+            throw new ApiException(404, "用户不存在");
+        }
+        return user;
     }
 
     public User updateUserProfile(long userId, String nickname, String avatarUrl) {

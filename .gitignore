@@ -3,3 +3,7 @@ out/
 *.log
 .idea/
 .vscode/
+.gradle/
+build/
+app/build/
+local.properties

@@ -1,51 +1,54 @@
-# 运动与健康系统 - 模块A桌面软件
+# 运动与健康系统 - 模块A Android客户端
 
-这是实验六“编码与测试”的模块 A 实现，形式为 Java Swing 桌面软件，不是网站或后端服务。
+本仓库实现实验六中本人负责的模块 A：用户账户与健康档案。根据前序需求规格说明书和软件设计文档，系统开发平台为 Android 客户端，服务端建议采用 Spring Boot。本仓库当前提交的是 Android 客户端模块代码。
 
-## 模块范围
+## 功能范围
 
-- 手机号注册与登录
-- 验证码模拟发送与校验
+- 手机号验证码模拟注册
+- 账号密码登录
 - 当前用户状态显示
-- 个人资料查询与修改
-- 健康档案录入、查询与修改
-- BMI 自动计算和体重状态判断
-- 健康档案输入合法性校验
+- 个人资料维护
+- 健康档案填写与查询
+- BMI 自动计算和体重状态展示
+- 健康档案输入范围校验
 
-## 技术说明
+## 技术栈
 
-- 开发语言：Java
-- 界面技术：Java Swing
-- 数据存储：内存存储，适合课堂演示和模块测试
-- 依赖管理：无第三方依赖，不需要 Maven 或 Gradle
+- Android 原生 Java
+- Android Gradle Plugin 8.8.0
+- compileSdk 35
+- minSdk 23
+- 无第三方依赖
 
-## 运行环境
+## 项目结构
 
-- JDK 8 或以上
-- Windows PowerShell
+- `app/src/main/java/com/health/modulea/MainActivity.java`：模块 A Android 页面入口
+- `app/src/main/java/com/health/modulea/model`：用户和健康档案领域对象
+- `app/src/main/java/com/health/modulea/service`：账户服务与健康档案服务
+- `app/src/main/java/com/health/modulea/store`：课堂演示用内存存储
 
-## 编译和启动
+## 运行方式
 
-```powershell
-.\scripts\build.ps1
-.\scripts\run.ps1
-```
+使用 Android Studio 打开本仓库根目录，等待 Gradle 同步完成后运行 `app`。
 
-启动后会打开“运动与健康系统 - 模块A”桌面窗口。
-
-## 使用流程
-
-1. 在“注册登录”页输入手机号、密码、昵称。
-2. 点击“发送验证码”，系统会生成演示验证码 `123456`。
-3. 点击“注册”，注册成功后自动成为当前用户。
-4. 在“个人资料”页修改昵称和头像地址。
-5. 在“健康档案”页填写性别、出生日期、身高、体重和活动水平。
-6. 点击“保存健康档案”，软件会显示 BMI 和体重状态。
-
-## 测试
+也可以在命令行构建：
 
 ```powershell
-.\scripts\test.ps1
+.\gradlew.bat :app:assembleDebug
 ```
 
-测试覆盖注册登录、重复手机号、资料修改、健康档案校验、BMI 计算。
+生成 APK：
+
+```text
+app\build\outputs\apk\debug\app-debug.apk
+```
+
+## 演示流程
+
+1. 打开应用后进入“注册登录”页。
+2. 输入手机号、密码和昵称。
+3. 点击“发送验证码”，演示验证码为 `123456`。
+4. 点击“注册并进入”，顶部显示当前用户。
+5. 切换到“个人资料”页维护昵称和头像地址。
+6. 切换到“健康档案”页填写性别、出生日期、身高、体重、活动水平。
+7. 点击“保存健康档案”，页面显示 BMI 和体重状态。

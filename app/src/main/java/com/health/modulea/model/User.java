@@ -1,7 +1,5 @@
 package com.health.modulea.model;
 
-import java.time.LocalDateTime;
-
 public class User {
     private final long userId;
     private final String mobile;
@@ -9,8 +7,6 @@ public class User {
     private String nickname;
     private String avatarUrl;
     private UserStatus status;
-    private final LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 
     public User(long userId, String mobile, String passwordHash, String nickname) {
         this.userId = userId;
@@ -19,8 +15,6 @@ public class User {
         this.nickname = nickname;
         this.avatarUrl = "";
         this.status = UserStatus.ACTIVE;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = this.createdAt;
     }
 
     public long getUserId() {
@@ -47,31 +41,16 @@ public class User {
         return status;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
     public void updateProfile(String nickname, String avatarUrl) {
-        if (nickname != null && !nickname.trim().isEmpty()) {
+        if (nickname != null && nickname.trim().length() > 0) {
             this.nickname = nickname.trim();
         }
         if (avatarUrl != null) {
             this.avatarUrl = avatarUrl.trim();
         }
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
-        this.updatedAt = LocalDateTime.now();
     }
 
     public void setStatus(UserStatus status) {
         this.status = status;
-        this.updatedAt = LocalDateTime.now();
     }
 }

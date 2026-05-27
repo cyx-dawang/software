@@ -1,18 +1,14 @@
 package com.health.modulea.model;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
 public class HealthProfile {
     private final long userId;
     private Gender gender;
-    private LocalDate birthDate;
+    private String birthDate;
     private int heightCm;
     private double weightKg;
     private ActivityLevel activityLevel;
-    private LocalDateTime updatedAt;
 
-    public HealthProfile(long userId, Gender gender, LocalDate birthDate, int heightCm, double weightKg,
+    public HealthProfile(long userId, Gender gender, String birthDate, int heightCm, double weightKg,
                          ActivityLevel activityLevel) {
         this.userId = userId;
         this.gender = gender;
@@ -20,7 +16,6 @@ public class HealthProfile {
         this.heightCm = heightCm;
         this.weightKg = weightKg;
         this.activityLevel = activityLevel;
-        this.updatedAt = LocalDateTime.now();
     }
 
     public long getUserId() {
@@ -31,7 +26,7 @@ public class HealthProfile {
         return gender;
     }
 
-    public LocalDate getBirthDate() {
+    public String getBirthDate() {
         return birthDate;
     }
 
@@ -47,10 +42,6 @@ public class HealthProfile {
         return activityLevel;
     }
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
     public double calcBMI() {
         double heightMeter = heightCm / 100.0;
         return Math.round((weightKg / (heightMeter * heightMeter)) * 10.0) / 10.0;
@@ -59,23 +50,22 @@ public class HealthProfile {
     public String bmiLevel() {
         double bmi = calcBMI();
         if (bmi < 18.5) {
-            return "UNDERWEIGHT";
+            return "偏瘦";
         }
         if (bmi < 24.0) {
-            return "NORMAL";
+            return "正常";
         }
         if (bmi < 28.0) {
-            return "OVERWEIGHT";
+            return "超重";
         }
-        return "OBESE";
+        return "肥胖";
     }
 
-    public void update(Gender gender, LocalDate birthDate, int heightCm, double weightKg, ActivityLevel activityLevel) {
+    public void update(Gender gender, String birthDate, int heightCm, double weightKg, ActivityLevel activityLevel) {
         this.gender = gender;
         this.birthDate = birthDate;
         this.heightCm = heightCm;
         this.weightKg = weightKg;
         this.activityLevel = activityLevel;
-        this.updatedAt = LocalDateTime.now();
     }
 }
