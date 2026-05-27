@@ -1,4 +1,4 @@
-package com.health.modulea.service;
+package com.health.sports.feature.account;
 
 import java.security.MessageDigest;
 
@@ -23,3 +23,4 @@ public class PasswordHasher {
         return hash(rawPassword).equals(passwordHash);
     }
 }
+

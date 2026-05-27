@@ -1,7 +1,7 @@
-package com.health.modulea.store;
+package com.health.sports.store;
 
-import com.health.modulea.model.HealthProfile;
-import com.health.modulea.model.User;
+import com.health.sports.model.HealthProfile;
+import com.health.sports.model.User;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -52,3 +52,4 @@ public class InMemoryStore {
         return profilesByUserId.get(userId);
     }
 }
+

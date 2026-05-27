@@ -1,4 +1,4 @@
-package com.health.modulea.model;
+package com.health.sports.model;
 
 public class ApiException extends RuntimeException {
     private final int statusCode;
@@ -12,3 +12,4 @@ public class ApiException extends RuntimeException {
         return statusCode;
     }
 }
+

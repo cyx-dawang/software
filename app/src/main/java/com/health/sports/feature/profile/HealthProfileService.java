@@ -1,10 +1,11 @@
-package com.health.modulea.service;
+package com.health.sports.feature.profile;
 
-import com.health.modulea.model.ActivityLevel;
-import com.health.modulea.model.ApiException;
-import com.health.modulea.model.Gender;
-import com.health.modulea.model.HealthProfile;
-import com.health.modulea.store.InMemoryStore;
+import com.health.sports.feature.account.AccountService;
+import com.health.sports.model.ActivityLevel;
+import com.health.sports.model.ApiException;
+import com.health.sports.model.Gender;
+import com.health.sports.model.HealthProfile;
+import com.health.sports.store.InMemoryStore;
 
 public class HealthProfileService {
     private final InMemoryStore store;
@@ -51,3 +52,4 @@ public class HealthProfileService {
         }
     }
 }
+

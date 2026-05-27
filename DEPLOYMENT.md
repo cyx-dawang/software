@@ -3,39 +3,52 @@
 ## 1. 开发环境
 
 - Android Studio
-- JDK 17，Android Studio 自带 JBR 即可
+- Android Studio 自带 JBR/JDK 17
 - Android SDK Platform 35
 - Windows PowerShell
 
-## 2. 导入项目
+## 2. 导入工程
 
 1. 打开 Android Studio。
 2. 选择 `Open`。
-3. 选择本仓库根目录：`C:\Users\ROG\Desktop\SoftwareEngineering\实验六\health-module-a`。
+3. 选择仓库根目录：`C:\Users\ROG\Desktop\SoftwareEngineering\实验六\health-module-a`。
 4. 等待 Gradle Sync 完成。
 
-## 3. 编译 APK
+## 3. 命令行构建
 
 ```powershell
 .\gradlew.bat :app:assembleDebug
 ```
 
-编译产物：
+如果项目位于中文路径，`gradle.properties` 中已配置：
 
-```text
-app\build\outputs\apk\debug\app-debug.apk
+```properties
+android.overridePathCheck=true
 ```
 
-## 4. 安装运行
+## 4. 安装到设备或模拟器
 
-连接 Android 手机或启动模拟器后执行：
+连接 Android 手机或启动模拟器：
 
 ```powershell
 .\gradlew.bat :app:installDebug
 ```
 
-也可以在 Android Studio 中点击运行按钮启动 `app`。
+也可以在 Android Studio 中选择 `app` 后点击运行。
 
-## 5. 模块说明
+## 5. 提交内容说明
 
-模块 A 当前使用内存存储模拟服务端数据，便于单人完成编码和课堂演示。后续与其他组员联调时，可以将 `service` 层替换为 HTTP API 调用，对接 Spring Boot 后端的认证服务和档案服务。
+提交实验六源代码时，建议包含：
+
+- `app/`
+- `gradle/`
+- `build.gradle`
+- `settings.gradle`
+- `gradlew`
+- `gradlew.bat`
+- `gradle.properties`
+- `README.md`
+- `DEPLOYMENT.md`
+- `MODULES.md`
+
+不要提交 `app/build/`、`.gradle/`、`local.properties` 等本机构建产物和本地配置。

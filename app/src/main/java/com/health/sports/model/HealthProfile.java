@@ -1,4 +1,4 @@
-package com.health.modulea.model;
+package com.health.sports.model;
 
 public class HealthProfile {
     private final long userId;
@@ -69,3 +69,4 @@ public class HealthProfile {
         this.activityLevel = activityLevel;
     }
 }
+

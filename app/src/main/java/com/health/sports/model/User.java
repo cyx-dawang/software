@@ -1,4 +1,4 @@
-package com.health.modulea.model;
+package com.health.sports.model;
 
 public class User {
     private final long userId;
@@ -54,3 +54,4 @@ public class User {
         this.status = status;
     }
 }
+

@@ -1,9 +1,9 @@
-package com.health.modulea.service;
+package com.health.sports.feature.account;
 
-import com.health.modulea.model.ApiException;
-import com.health.modulea.model.User;
-import com.health.modulea.model.UserStatus;
-import com.health.modulea.store.InMemoryStore;
+import com.health.sports.model.ApiException;
+import com.health.sports.model.User;
+import com.health.sports.model.UserStatus;
+import com.health.sports.store.InMemoryStore;
 
 import java.util.regex.Pattern;
 
@@ -85,3 +85,4 @@ public class AccountService {
         }
     }
 }
+

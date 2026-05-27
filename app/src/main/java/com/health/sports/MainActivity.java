@@ -1,4 +1,4 @@
-package com.health.modulea;
+package com.health.sports;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -15,15 +15,15 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.health.modulea.model.ActivityLevel;
-import com.health.modulea.model.ApiException;
-import com.health.modulea.model.Gender;
-import com.health.modulea.model.HealthProfile;
-import com.health.modulea.model.User;
-import com.health.modulea.service.AccountService;
-import com.health.modulea.service.HealthProfileService;
-import com.health.modulea.service.PasswordHasher;
-import com.health.modulea.store.InMemoryStore;
+import com.health.sports.model.ActivityLevel;
+import com.health.sports.model.ApiException;
+import com.health.sports.model.Gender;
+import com.health.sports.model.HealthProfile;
+import com.health.sports.model.User;
+import com.health.sports.feature.account.AccountService;
+import com.health.sports.feature.profile.HealthProfileService;
+import com.health.sports.feature.account.PasswordHasher;
+import com.health.sports.store.InMemoryStore;
 
 public class MainActivity extends Activity {
     private AccountService accountService;
@@ -74,7 +74,7 @@ public class MainActivity extends Activity {
         root.addView(title, new LinearLayout.LayoutParams(-1, dp(58)));
 
         currentUserView = new TextView(this);
-        currentUserView.setText("模块A：用户账户与健康档案");
+        currentUserView.setText("Android客户端：模块A已完成，B/C可继续接入");
         currentUserView.setTextColor(Color.WHITE);
         currentUserView.setPadding(dp(18), 0, dp(18), dp(12));
         currentUserView.setBackgroundColor(Color.rgb(32, 83, 96));
@@ -86,9 +86,9 @@ public class MainActivity extends Activity {
         nav.setBackgroundColor(Color.WHITE);
         root.addView(nav, new LinearLayout.LayoutParams(-1, dp(58)));
 
-        Button account = navButton("注册登录");
-        Button user = navButton("个人资料");
-        Button profile = navButton("健康档案");
+        Button account = navButton("账户");
+        Button user = navButton("资料");
+        Button profile = navButton("档案");
         nav.addView(account, weightParams());
         nav.addView(user, weightParams());
         nav.addView(profile, weightParams());
@@ -342,3 +342,4 @@ public class MainActivity extends Activity {
         void run();
     }
 }
+
