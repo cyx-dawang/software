@@ -2,6 +2,12 @@ plugins {
     id 'com.android.application'
 }
 
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localProperties.load(new FileInputStream(localPropertiesFile))
+}
+
 android {
     namespace 'com.health.sports'
     compileSdk 35
@@ -12,5 +18,28 @@ android {
         targetSdk 35
         versionCode 1
         versionName '1.0'
+
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
+        }
+
+        manifestPlaceholders = [
+            BAIDU_MAP_AK: localProperties.getProperty('BAIDU_MAP_AK', '')
+        ]
+
+        resValue "string", "baidu_map_ak", localProperties.getProperty('BAIDU_MAP_AK', '')
     }
+
+    packagingOptions {
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/NOTICE'
+    }
+}
+
+dependencies {
+    implementation 'com.baidu.lbsyun:BaiduMapSDK_Map:8.0.0'
+    implementation 'com.baidu.lbsyun:BaiduMapSDK_Search:8.0.0'
+    implementation 'com.baidu.lbsyun:BaiduMapSDK_Util:8.0.0'
+    implementation 'com.baidu.lbsyun:BaiduMapSDK_Location_All:9.6.8'
 }

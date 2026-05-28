@@ -1,8 +1,11 @@
 package com.health.sports;
 
 import android.app.Activity;
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.graphics.Color;
+import android.util.Log;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
@@ -14,6 +17,19 @@ import android.widget.Spinner;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.baidu.mapapi.SDKInitializer;
+import com.baidu.mapapi.map.BaiduMap;
+import com.baidu.location.LocationClient;
+import com.baidu.mapapi.map.BitmapDescriptor;
+import com.baidu.mapapi.map.BitmapDescriptorFactory;
+import com.baidu.mapapi.map.MapStatus;
+import com.baidu.mapapi.map.MapStatusUpdateFactory;
+import com.baidu.mapapi.map.MapView;
+import com.baidu.mapapi.map.MarkerOptions;
+import com.baidu.mapapi.map.OverlayOptions;
+import com.baidu.mapapi.map.PolylineOptions;
+import com.baidu.mapapi.model.LatLng;
 
 import com.health.sports.model.ActivityLevel;
 import com.health.sports.model.ApiException;
@@ -28,13 +44,20 @@ import com.health.sports.feature.account.PasswordHasher;
 import com.health.sports.feature.workout.WorkoutService;
 import com.health.sports.store.InMemoryStore;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainActivity extends Activity implements WorkoutService.WorkoutUpdateListener {
+    private static final String TAG = "HealthApp";
+
     private AccountService accountService;
     private HealthProfileService profileService;
     private WorkoutService workoutService;
     private User currentUser;
 
+    private LinearLayout root;
     private LinearLayout content;
+    private LinearLayout mapSlot;
     private TextView currentUserView;
 
     private LinearLayout workoutDataPanel;
@@ -50,6 +73,15 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     private Button workoutStartBtn;
     private LinearLayout workoutControls;
     private LinearLayout workoutReportContainer;
+
+    private MapView mapView;
+    private BaiduMap baiduMap;
+    private List<LatLng> trackLatLngs;
+    private boolean mapReady;
+    private boolean baiduSdkReady;
+    private boolean trackLineDirty;
+    private LatLng lastAnimatedPoint;
+    private Bundle savedState;
 
     private EditText registerMobile;
     private EditText registerCode;
@@ -67,20 +99,140 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     private Spinner activityInput;
     private TextView profileResult;
 
+    private static final int REQUEST_PERMISSIONS = 100;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        this.savedState = savedInstanceState;
+        requestRuntimePermissions();
+        initBaiduSdk();
         InMemoryStore store = new InMemoryStore();
         accountService = new AccountService(store, new PasswordHasher());
         profileService = new HealthProfileService(store, accountService);
-        workoutService = new WorkoutService(store, accountService, profileService);
+        workoutService = new WorkoutService(store, accountService, profileService, getApplicationContext());
         workoutService.setListener(this);
+        trackLatLngs = new ArrayList<>();
         setContentView(createRootView());
+        initPersistentMapView();
         showAccountPage();
     }
 
+    private void initBaiduSdk() {
+        try {
+            SDKInitializer.setAgreePrivacy(getApplicationContext(), true);
+            SDKInitializer.initialize(getApplicationContext());
+            LocationClient.setAgreePrivacy(true);
+            baiduSdkReady = true;
+            Log.i(TAG, "Baidu SDK initialized successfully");
+        } catch (Throwable t) {
+            Log.e(TAG, "Baidu SDK init failed: " + t.getClass().getSimpleName(), t);
+            toast("地图SDK初始化失败: " + t.getClass().getSimpleName());
+            baiduSdkReady = false;
+        }
+    }
+
+    private void requestRuntimePermissions() {
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED
+                || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.POST_NOTIFICATIONS,
+            }, REQUEST_PERMISSIONS);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                           int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode != REQUEST_PERMISSIONS) {
+            return;
+        }
+        boolean fineLocationGranted = false;
+        boolean coarseLocationGranted = false;
+        boolean notificationGranted = false;
+        for (int i = 0; i < permissions.length; i++) {
+            boolean granted = grantResults[i] == PackageManager.PERMISSION_GRANTED;
+            if (Manifest.permission.ACCESS_FINE_LOCATION.equals(permissions[i])) {
+                fineLocationGranted = granted;
+            } else if (Manifest.permission.ACCESS_COARSE_LOCATION.equals(permissions[i])) {
+                coarseLocationGranted = granted;
+            } else if (Manifest.permission.POST_NOTIFICATIONS.equals(permissions[i])) {
+                notificationGranted = granted;
+            }
+        }
+        if (!fineLocationGranted) {
+            Log.w(TAG, "Fine location permission denied");
+            toast("精确定位权限被拒绝，GPS定位和地图功能将不可用");
+        } else {
+            Log.i(TAG, "Fine location permission granted");
+        }
+        if (!coarseLocationGranted) {
+            Log.w(TAG, "Coarse location permission denied");
+        }
+        if (!notificationGranted) {
+            Log.w(TAG, "Notification permission denied");
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        try {
+            if (mapView != null) {
+                mapView.onResume();
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "Error in onResume", t);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        try {
+            if (mapView != null) {
+                mapView.onPause();
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "Error in onPause", t);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        try {
+            if (mapView != null) {
+                Log.i(TAG, "Destroying persistent MapView");
+                mapView.onPause();
+                mapView.onDestroy();
+                mapView = null;
+                baiduMap = null;
+                mapReady = false;
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "Error in onDestroy", t);
+        }
+        if (workoutService != null) {
+            workoutService.shutdown();
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (mapView != null) {
+            mapView.onSaveInstanceState(outState);
+        }
+    }
+
     private View createRootView() {
-        LinearLayout root = new LinearLayout(this);
+        root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Color.rgb(246, 248, 250));
 
@@ -120,6 +272,11 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
         profile.setOnClickListener(v -> showProfilePage());
         workout.setOnClickListener(v -> showWorkoutPage());
 
+        mapSlot = new LinearLayout(this);
+        mapSlot.setOrientation(LinearLayout.VERTICAL);
+        mapSlot.setVisibility(View.GONE);
+        root.addView(mapSlot, new LinearLayout.LayoutParams(-1, -2));
+
         ScrollView scrollView = new ScrollView(this);
         content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
@@ -130,6 +287,7 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     }
 
     private void showAccountPage() {
+        cleanupMapView();
         content.removeAllViews();
         content.addView(sectionTitle("手机号注册"));
         registerMobile = input("手机号，如 13800138000", false);
@@ -174,6 +332,7 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     }
 
     private void showUserPage() {
+        cleanupMapView();
         content.removeAllViews();
         content.addView(sectionTitle("个人资料"));
         nicknameInput = input("昵称", false);
@@ -196,6 +355,7 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     }
 
     private void showProfilePage() {
+        cleanupMapView();
         content.removeAllViews();
         content.addView(sectionTitle("健康档案"));
         genderInput = spinner(new String[]{"MALE", "FEMALE", "UNKNOWN"});
@@ -243,14 +403,18 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     }
 
     private void showWorkoutPage() {
+        cleanupMapView();
         content.removeAllViews();
         WorkoutStatus status = workoutService.getStatus();
+
+        Log.d(TAG, "showWorkoutPage status=" + status + " baiduSdkReady=" + baiduSdkReady);
 
         if (status == WorkoutStatus.COMPLETED) {
             return;
         }
 
         if (status == WorkoutStatus.IDLE) {
+            workoutService.startPreloading();
             content.addView(sectionTitle("户外跑步"));
             content.addView(label("准备开始一段新的跑步旅程"));
 
@@ -262,7 +426,6 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
             workoutStartBtn.setOnClickListener(v -> runAction(() -> {
                 User user = requireLogin();
                 workoutService.startWorkout(user.getUserId());
-                refreshWorkoutPage();
             }));
             return;
         }
@@ -270,11 +433,15 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
         content.addView(sectionTitle(status == WorkoutStatus.PAUSED ? "运动已暂停" : "运动进行中"));
 
         workoutGpsView = new TextView(this);
-        workoutGpsView.setText("GPS 信号: 模拟中 · 精度 3-7m");
+        workoutGpsView.setText(workoutService.getGpsStatusText());
         workoutGpsView.setTextColor(Color.rgb(102, 102, 102));
         workoutGpsView.setTextSize(12);
-        workoutGpsView.setPadding(0, 0, 0, dp(10));
+        workoutGpsView.setPadding(0, 0, 0, dp(6));
         content.addView(workoutGpsView);
+
+        if (mapSlot != null && mapView != null) {
+            mapSlot.setVisibility(View.VISIBLE);
+        }
 
         workoutDataPanel = new LinearLayout(this);
         workoutDataPanel.setOrientation(LinearLayout.VERTICAL);
@@ -307,7 +474,6 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
 
             workoutPauseBtn.setOnClickListener(v -> runAction(() -> {
                 workoutService.pauseWorkout();
-                refreshWorkoutPage();
             }));
             workoutEndBtn.setOnClickListener(v -> runAction(() -> {
                 workoutService.pauseWorkout();
@@ -315,6 +481,9 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
             }));
 
             updateWorkoutLiveData(rec, rec.getAvgPaceSecondsPerKm());
+            if (mapReady && workoutService.isGpsFixed()) {
+                updateMapTrajectory();
+            }
         } else if (status == WorkoutStatus.PAUSED) {
             workoutResumeBtn = primaryButton("继续");
             workoutResumeBtn.setBackgroundColor(Color.rgb(0, 229, 178));
@@ -325,11 +494,13 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
 
             workoutResumeBtn.setOnClickListener(v -> runAction(() -> {
                 workoutService.resumeWorkout();
-                refreshWorkoutPage();
             }));
             workoutEndBtn.setOnClickListener(v -> runAction(() -> showEndConfirmDialog()));
 
             updateWorkoutLiveData(rec, rec.getAvgPaceSecondsPerKm());
+            if (mapReady && workoutService.isGpsFixed()) {
+                updateMapTrajectory();
+            }
         }
     }
 
@@ -410,8 +581,134 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
         }));
     }
 
+    private void cleanupMapView() {
+        if (mapSlot != null) {
+            mapSlot.setVisibility(View.GONE);
+        }
+        trackLatLngs = new ArrayList<>();
+        trackLineDirty = true;
+        lastAnimatedPoint = null;
+        Log.d(TAG, "cleanupMapView: mapSlot hidden");
+    }
+
     private void refreshWorkoutPage() {
+        cleanupMapView();
         showWorkoutPage();
+    }
+
+    private void initPersistentMapView() {
+        Log.d(TAG, "initPersistentMapView: baiduSdkReady=" + baiduSdkReady);
+        if (!baiduSdkReady) {
+            Log.w(TAG, "initPersistentMapView: SDK not ready, skip map");
+            return;
+        }
+        try {
+            mapView = new MapView(this);
+            mapView.onCreate(this, savedState);
+            mapSlot.removeAllViews();
+            mapSlot.addView(mapView, new LinearLayout.LayoutParams(-1, dp(300)));
+            baiduMap = mapView.getMap();
+            if (baiduMap == null) {
+                Log.e(TAG, "initPersistentMapView: baiduMap is null");
+                toast("地图服务暂不可用");
+                mapReady = false;
+                return;
+            }
+            baiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
+            baiduMap.setMapStatus(MapStatusUpdateFactory.newMapStatus(
+                    new MapStatus.Builder().zoom(17).build()));
+            baiduMap.setTrafficEnabled(false);
+            mapReady = true;
+            Log.i(TAG, "initPersistentMapView: SUCCESS, waiting for onResume");
+        } catch (Throwable t) {
+            Log.e(TAG, "initPersistentMapView failed: " + t.getClass().getSimpleName(), t);
+            toast("地图初始化失败，将以纯数据模式记录");
+            mapView = null;
+            baiduMap = null;
+            mapReady = false;
+        }
+    }
+
+    private void updateMapTrajectory() {
+        if (!mapReady || baiduMap == null) {
+            return;
+        }
+
+        if (trackLatLngs == null) {
+            trackLatLngs = new ArrayList<>();
+        }
+
+        if (trackLatLngs.isEmpty()) {
+            WorkoutRecord rec = workoutService.getCurrentRecord();
+            if (rec != null) {
+                List<com.health.sports.model.TrackPoint> points = workoutService.findTrackPoints(rec.getRecordId());
+                Log.d(TAG, "updateMapTrajectory: loading " + points.size() + " track points from store");
+                for (com.health.sports.model.TrackPoint point : points) {
+                    trackLatLngs.add(new LatLng(point.getLatitude(), point.getLongitude()));
+                }
+                if (!trackLatLngs.isEmpty()) {
+                    trackLineDirty = true;
+                }
+            }
+        }
+
+        double lat = workoutService.getLatestLatitude();
+        double lng = workoutService.getLatestLongitude();
+        LatLng newPoint = new LatLng(lat, lng);
+
+        boolean isNewTrackPoint = trackLatLngs.isEmpty();
+        if (!isNewTrackPoint) {
+            LatLng lastPoint = trackLatLngs.get(trackLatLngs.size() - 1);
+            double dLat = Math.abs(lastPoint.latitude - lat);
+            double dLng = Math.abs(lastPoint.longitude - lng);
+            isNewTrackPoint = (dLat > 0.000005 || dLng > 0.000005);
+        }
+        if (isNewTrackPoint) {
+            trackLatLngs.add(newPoint);
+            trackLineDirty = true;
+        }
+
+        if (trackLineDirty) {
+            baiduMap.clear();
+            trackLineDirty = false;
+
+            if (trackLatLngs.size() >= 1) {
+                BitmapDescriptor startIcon = BitmapDescriptorFactory.fromResource(
+                        android.R.drawable.ic_media_play);
+                MarkerOptions startMarker = new MarkerOptions()
+                        .position(trackLatLngs.get(0))
+                        .icon(startIcon)
+                        .title("起点");
+                baiduMap.addOverlay(startMarker);
+            }
+
+            if (trackLatLngs.size() >= 2) {
+                PolylineOptions polylineOptions = new PolylineOptions()
+                        .width(8)
+                        .color(Color.rgb(0, 229, 178))
+                        .points(trackLatLngs);
+                baiduMap.addOverlay(polylineOptions);
+            }
+        }
+
+        BitmapDescriptor currentIcon = BitmapDescriptorFactory.fromResource(
+                android.R.drawable.presence_online);
+        MarkerOptions currentMarker = new MarkerOptions()
+                .position(newPoint)
+                .icon(currentIcon)
+                .title("当前位置");
+        baiduMap.addOverlay(currentMarker);
+
+        boolean shouldAnimate = lastAnimatedPoint == null;
+        if (!shouldAnimate) {
+            double dLat = Math.abs(lastAnimatedPoint.latitude - lat);
+            double dLng = Math.abs(lastAnimatedPoint.longitude - lng);
+            shouldAnimate = (dLat > 0.0001 || dLng > 0.0001);
+        }
+        if (shouldAnimate) {
+            baiduMap.animateMapStatus(MapStatusUpdateFactory.newLatLng(newPoint));
+            lastAnimatedPoint = newPoint;
+        }
     }
 
     private void updateWorkoutLiveData(WorkoutRecord record, double currentPace) {
@@ -442,19 +739,41 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
             }
             workoutStatusView.setText(hint);
         }
+        if (workoutGpsView != null) {
+            workoutGpsView.setText(workoutService.getGpsStatusText());
+        }
     }
 
     @Override
     public void onTick(WorkoutRecord record, double currentPace) {
-        runOnUiThread(() -> updateWorkoutLiveData(record, currentPace));
+        runOnUiThread(() -> {
+            updateWorkoutLiveData(record, currentPace);
+            updateMapTrajectory();
+        });
     }
 
     @Override
     public void onStateChanged(WorkoutStatus status) {
+        Log.d(TAG, "onStateChanged: " + status);
         if (status == WorkoutStatus.COMPLETED) {
             return;
         }
-        runOnUiThread(this::refreshWorkoutPage);
+        runOnUiThread(() -> {
+            refreshWorkoutPage();
+        });
+    }
+
+    @Override
+    public void onGpsFixAcquired(double lat, double lng, float accuracy) {
+        runOnUiThread(() -> {
+            toast("GPS 已定位！精度 " + String.format("%.0f", accuracy) + "m");
+            if (mapReady) {
+                updateMapTrajectory();
+            }
+            if (workoutGpsView != null) {
+                workoutGpsView.setText(workoutService.getGpsStatusText());
+            }
+        });
     }
 
     private String formatPace(double secondsPerKm) {
