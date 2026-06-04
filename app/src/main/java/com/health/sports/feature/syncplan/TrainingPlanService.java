@@ -35,7 +35,7 @@ public class TrainingPlanService {
         TrainingPlan plan = new TrainingPlan(planId, userId, planName, planType);
 
         plan.setGoalDescription(generateGoalDescription(planType));
-        plan.setTips(generateTips(planType));
+        plan.getTips().addAll(generateTips(planType));
         generateTrainingDays(plan, planType);
 
         plansByUserId.computeIfAbsent(userId, k -> new ArrayList<>()).add(plan);

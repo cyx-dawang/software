@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/padding_large">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="手机号注册"
+        android:textColor="@color/textPrimary"
+        android:textSize="@dimen/text_subtitle"
+        android:textStyle="bold"
+        android:paddingBottom="10dp" />
+
+    <EditText
+        android:id="@+id/registerMobile"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/button_height"
+        android:hint="@string/phone_hint"
+        android:singleLine="true"
+        android:background="@color/white"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:layout_marginBottom="6dp" />
+
+    <EditText
+        android:id="@+id/registerCode"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/button_height"
+        android:hint="@string/code_hint"
+        android:singleLine="true"
+        android:background="@color/white"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:layout_marginBottom="6dp"
+        android:text="123456" />
+
+    <EditText
+        android:id="@+id/registerPassword"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/button_height"
+        android:hint="@string/password_hint"
+        android:singleLine="true"
+        android:inputType="textPassword"
+        android:background="@color/white"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:layout_marginBottom="6dp" />
+
+    <EditText
+        android:id="@+id/registerNickname"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/button_height"
+        android:hint="@string/nickname_hint"
+        android:singleLine="true"
+        android:background="@color/white"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:layout_marginBottom="6dp" />
+
+    <Button
+        android:id="@+id/sendCodeBtn"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/button_height"
+        android:text="@string/get_code_btn"
+        android:textColor="@color/white"
+        android:backgroundTint="@color/primary"
+        android:layout_marginBottom="6dp" />
+
+    <Button
+        android:id="@+id/registerBtn"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/button_height"
+        android:text="@string/register_btn"
+        android:textColor="@color/white"
+        android:backgroundTint="@color/primary"
+        android:layout_marginBottom="20dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="账号密码登录"
+        android:textColor="@color/textPrimary"
+        android:textSize="@dimen/text_subtitle"
+        android:textStyle="bold"
+        android:paddingBottom="10dp" />
+
+    <EditText
+        android:id="@+id/loginMobile"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/button_height"
+        android:hint="@string/phone_hint"
+        android:singleLine="true"
+        android:background="@color/white"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:layout_marginBottom="6dp" />
+
+    <EditText
+        android:id="@+id/loginPassword"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/button_height"
+        android:hint="@string/password_hint"
+        android:singleLine="true"
+        android:inputType="textPassword"
+        android:background="@color/white"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:layout_marginBottom="6dp" />
+
+    <Button
+        android:id="@+id/loginBtn"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/button_height"
+        android:text="@string/login_btn"
+        android:textColor="@color/white"
+        android:backgroundTint="@color/primary" />
+
+</LinearLayout>

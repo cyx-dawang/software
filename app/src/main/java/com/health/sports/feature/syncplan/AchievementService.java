@@ -42,7 +42,7 @@ public class AchievementService {
                 totalWorkouts,
                 Math.round(totalDistance * 10) / 10.0,
                 totalDurationSeconds,
-                Math.round(totalCalories),
+                (int) Math.round(totalCalories),
                 achievements.getUnlockedBadgeCount(),
                 achievements.getUnlockedBadges(),
                 new Date()
@@ -93,7 +93,8 @@ public class AchievementService {
 
         for (String badgeId : badgeIds) {
             if (!achievements.unlockedBadges.containsKey(badgeId)) {
-                Badge badge = unlockBadgeIfConditionMet(userId, badgeId, totalWorkouts, totalDistance, totalCalories);
+                Badge badge = unlockBadgeIfConditionMet(userId, badgeId, totalWorkouts,
+                        totalDistance, totalCalories, records);
                 if (badge != null) {
                     return badge;
                 }
@@ -103,7 +104,8 @@ public class AchievementService {
     }
 
     private Badge unlockBadgeIfConditionMet(long userId, String badgeId, int totalWorkouts,
-                                            double totalDistance, double totalCalories) {
+                                            double totalDistance, double totalCalories,
+                                            List<WorkoutRecord> records) {
         UserAchievements achievements = getUserAchievements(userId);
 
         switch (badgeId) {

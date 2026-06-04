@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/workoutRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/padding_large">
+
+    <TextView
+        android:id="@+id/workoutTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="户外跑步"
+        android:textColor="@color/textPrimary"
+        android:textSize="@dimen/text_subtitle"
+        android:textStyle="bold"
+        android:paddingBottom="10dp" />
+
+    <TextView
+        android:id="@+id/gpsStatusView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="正在搜索卫星..."
+        android:textColor="@color/textSecondary"
+        android:textSize="12sp" />
+
+    <LinearLayout
+        android:id="@+id/dataPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingTop="8dp">
+
+        <TextView
+            android:id="@+id/distanceView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="总距离\n-- km"
+            android:textColor="@color/accent"
+            android:textSize="@dimen/text_subtitle"
+            android:padding="10dp"
+            android:background="@color/white"
+            android:layout_marginBottom="6dp" />
+
+        <TextView
+            android:id="@+id/durationView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="时长\n--:--"
+            android:textColor="@color/primaryDark"
+            android:textSize="@dimen/text_subtitle"
+            android:padding="10dp"
+            android:background="@color/white"
+            android:layout_marginBottom="6dp" />
+
+        <TextView
+            android:id="@+id/paceView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="平均配速\n--'--''"
+            android:textColor="@color/coral"
+            android:textSize="@dimen/text_subtitle"
+            android:padding="10dp"
+            android:background="@color/white"
+            android:layout_marginBottom="6dp" />
+
+        <TextView
+            android:id="@+id/caloriesView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="消耗\n-- kcal"
+            android:textColor="@color/textSecondary"
+            android:textSize="@dimen/text_subtitle"
+            android:padding="10dp"
+            android:background="@color/white"
+            android:layout_marginBottom="6dp" />
+
+        <TextView
+            android:id="@+id/statusHintView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="@color/textSecondary"
+            android:textSize="13sp"
+            android:padding="4dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/controlsPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp" />
+
+    <TextView
+        android:id="@+id/workoutLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="准备开始一段新的跑步旅程"
+        android:textColor="@color/textSecondary"
+        android:textSize="@dimen/text_body"
+        android:paddingTop="12dp" />
+
+    <Button
+        android:id="@+id/startRunBtn"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/button_height"
+        android:text="@string/start_running"
+        android:textColor="@color/primaryDark"
+        android:backgroundTint="@color/accent"
+        android:layout_marginTop="12dp" />
+
+</LinearLayout>

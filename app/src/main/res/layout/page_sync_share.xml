@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/syncRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/padding_large">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="同步与成就分享"
+        android:textColor="@color/textPrimary"
+        android:textSize="@dimen/text_subtitle"
+        android:textStyle="bold"
+        android:paddingBottom="12dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="同步服务"
+        android:textColor="@color/textPrimary"
+        android:textSize="@dimen/text_body"
+        android:paddingBottom="8dp" />
+
+    <Button
+        android:id="@+id/connectWearBtn"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/button_height"
+        android:text="连接穿戴设备"
+        android:textColor="@color/primaryDark"
+        android:backgroundTint="@color/accent"
+        android:layout_marginBottom="20dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="运动成就分享"
+        android:textColor="@color/textPrimary"
+        android:textSize="@dimen/text_body"
+        android:paddingBottom="8dp" />
+
+    <LinearLayout
+        android:id="@+id/recordsList"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" />
+
+    <TextView
+        android:id="@+id/noRecordsHint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="暂无运动记录，快去跑步吧"
+        android:textColor="@color/textSecondary"
+        android:textSize="@dimen/text_body" />
+
+</LinearLayout>

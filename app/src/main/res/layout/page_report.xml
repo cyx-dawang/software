@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/reportRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/padding_large">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="运动总结报告"
+        android:textColor="@color/textPrimary"
+        android:textSize="@dimen/text_subtitle"
+        android:textStyle="bold"
+        android:paddingBottom="12dp" />
+
+    <TextView
+        android:id="@+id/reportDate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/textSecondary"
+        android:textSize="13sp"
+        android:paddingBottom="16dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@color/white"
+            android:padding="@dimen/padding_medium"
+            android:layout_marginEnd="4dp">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="总距离"
+                android:textColor="@color/textSecondary"
+                android:textSize="13sp" />
+            <TextView
+                android:id="@+id/reportDistance"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="--"
+                android:textColor="@color/accent"
+                android:textSize="@dimen/text_metric"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@color/white"
+            android:padding="@dimen/padding_medium"
+            android:layout_marginStart="4dp">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="总时长"
+                android:textColor="@color/textSecondary"
+                android:textSize="13sp" />
+            <TextView
+                android:id="@+id/reportDuration"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="--"
+                android:textColor="@color/primaryDark"
+                android:textSize="@dimen/text_metric"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="16dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@color/white"
+            android:padding="@dimen/padding_medium"
+            android:layout_marginEnd="4dp">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="平均配速"
+                android:textColor="@color/textSecondary"
+                android:textSize="13sp" />
+            <TextView
+                android:id="@+id/reportPace"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="--"
+                android:textColor="@color/coral"
+                android:textSize="@dimen/text_metric"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@color/white"
+            android:padding="@dimen/padding_medium"
+            android:layout_marginStart="4dp">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="消耗"
+                android:textColor="@color/textSecondary"
+                android:textSize="13sp" />
+            <TextView
+                android:id="@+id/reportCalories"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="--"
+                android:textColor="@color/textPrimary"
+                android:textSize="@dimen/text_metric"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/reportButtons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp">
+
+        <Button
+            android:id="@+id/reportSaveBtn"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/button_height"
+            android:layout_weight="1"
+            android:text="@string/save_record"
+            android:textColor="@color/primaryDark"
+            android:backgroundTint="@color/accent"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/reportDiscardBtn"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/button_height"
+            android:layout_weight="1"
+            android:text="@string/discard_record"
+            android:textColor="@color/white"
+            android:backgroundTint="@color/danger"
+            android:layout_marginStart="4dp" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/reportAgainBtn"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/button_height"
+        android:text="再跑一次"
+        android:textColor="@color/primary"
+        android:backgroundTint="@color/divider" />
+
+</LinearLayout>

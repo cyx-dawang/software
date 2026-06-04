@@ -7,6 +7,9 @@ public class HealthProfile {
     private int heightCm;
     private double weightKg;
     private ActivityLevel activityLevel;
+    private int restingHeartRate;
+    private int bpSystolic;
+    private int bpDiastolic;
 
     public HealthProfile(long userId, Gender gender, String birthDate, int heightCm, double weightKg,
                          ActivityLevel activityLevel) {
@@ -49,24 +52,29 @@ public class HealthProfile {
 
     public String bmiLevel() {
         double bmi = calcBMI();
-        if (bmi < 18.5) {
-            return "偏瘦";
-        }
-        if (bmi < 24.0) {
-            return "正常";
-        }
-        if (bmi < 28.0) {
-            return "超重";
-        }
+        if (bmi < 18.5) return "偏瘦";
+        if (bmi < 24.0) return "正常";
+        if (bmi < 28.0) return "超重";
         return "肥胖";
     }
 
-    public void update(Gender gender, String birthDate, int heightCm, double weightKg, ActivityLevel activityLevel) {
+    public int getRestingHeartRate() { return restingHeartRate; }
+    public void setRestingHeartRate(int restingHeartRate) { this.restingHeartRate = restingHeartRate; }
+    public int getBpSystolic() { return bpSystolic; }
+    public void setBpSystolic(int bpSystolic) { this.bpSystolic = bpSystolic; }
+    public int getBpDiastolic() { return bpDiastolic; }
+    public void setBpDiastolic(int bpDiastolic) { this.bpDiastolic = bpDiastolic; }
+
+    public void update(Gender gender, String birthDate, int heightCm, double weightKg,
+                       ActivityLevel activityLevel, int restingHeartRate, int bpSystolic, int bpDiastolic) {
         this.gender = gender;
         this.birthDate = birthDate;
         this.heightCm = heightCm;
         this.weightKg = weightKg;
         this.activityLevel = activityLevel;
+        this.restingHeartRate = restingHeartRate;
+        this.bpSystolic = bpSystolic;
+        this.bpDiastolic = bpDiastolic;
     }
 }
 

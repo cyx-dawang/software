@@ -62,11 +62,16 @@ public class WorkoutService {
     private double lastAcceptedLon;
     private int stationaryCount;
     private int consecutiveRejections;
+    private KalmanFilter latFilter;
+    private KalmanFilter lonFilter;
+    private double userStepLengthM;
     private static final double MIN_MOVE_SPEED_MS = 0.8;
     private static final double MAX_ACCEPTABLE_ACCURACY = 30.0;
     private static final double MAX_JUMP_METERS = 300.0;
     private static final int MAX_CONSECUTIVE_REJECTIONS = 5;
-    private static final double WMA_WEIGHT = 0.3;
+    private static final double MIN_SPEED_THRESHOLD = 0.3;
+    private static final double MAX_SPEED_THRESHOLD = 7.0;
+    private static final double DEFAULT_STEP_LENGTH_M = 0.75;
 
     public interface WorkoutUpdateListener {
         void onTick(WorkoutRecord record, double currentPace);
@@ -98,7 +103,7 @@ public class WorkoutService {
             LocationClientOption option = new LocationClientOption();
             option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);
             option.setCoorType("bd09ll");
-            option.setScanSpan(2000);
+            option.setScanSpan(5000);
             option.setOpenGps(true);
             option.setLocationNotify(true);
             option.setIgnoreKillProcess(false);
@@ -134,6 +139,20 @@ public class WorkoutService {
         initialLocationReceived = preloadedReceived;
         stepCount = 0;
         stepCountStart = 0;
+
+        HealthProfile profile = null;
+        try {
+            profile = profileService.getProfile(userId);
+        } catch (ApiException ignored) {
+        }
+        if (profile != null && profile.getHeightCm() > 0) {
+            userStepLengthM = (profile.getHeightCm() / 100.0) * 0.45;
+        } else {
+            userStepLengthM = DEFAULT_STEP_LENGTH_M;
+        }
+
+        latFilter = new KalmanFilter(currentLat, 10.0);
+        lonFilter = new KalmanFilter(currentLon, 10.0);
 
         startBaiduLocation();
         startStepCounter();
@@ -367,6 +386,8 @@ public class WorkoutService {
         }
 
         if (!initialLocationReceived) {
+            latFilter.reset(rawLat, accuracy);
+            lonFilter.reset(rawLng, accuracy);
             smoothedLat = rawLat;
             smoothedLon = rawLng;
             lastAcceptedLat = rawLat;
@@ -379,6 +400,7 @@ public class WorkoutService {
             lastPointTime = timestamp;
             stationaryCount = 0;
             consecutiveRejections = 0;
+            accumulatedDistance = 0;
             initialLocationReceived = true;
             restartWatchdog();
             Log.i(TAG, "First location: lat=" + rawLat + " lng=" + rawLng
@@ -398,6 +420,17 @@ public class WorkoutService {
                 lastAcceptedLat, lastAcceptedLon, rawLat, rawLng);
         double timeDeltaSec = (timestamp - lastPointTime) / 1000.0;
 
+        if (speed < MIN_SPEED_THRESHOLD && rawDist < 10.0) {
+            Log.d(TAG, "Speed hard filter: speed=" + speed + "m/s rawDist="
+                    + String.format("%.1f", rawDist) + "m (stationary drift)");
+            return;
+        }
+        if (speed > MAX_SPEED_THRESHOLD && rawDist > 50.0) {
+            Log.w(TAG, "GPS spike rejected: speed=" + speed + "m/s rawDist="
+                    + String.format("%.1f", rawDist) + "m");
+            return;
+        }
+
         if (timeDeltaSec < 3.0 && rawDist > MAX_JUMP_METERS) {
             consecutiveRejections++;
             Log.w(TAG, "Jump rejected #" + consecutiveRejections + ": "
@@ -411,13 +444,21 @@ public class WorkoutService {
         }
 
         boolean isDeadlockRecovery = consecutiveRejections >= MAX_CONSECUTIVE_REJECTIONS;
-
         if (isDeadlockRecovery) {
             consecutiveRejections = 0;
             lastPointTime = timestamp;
+            latFilter.reset(rawLat, accuracy);
+            lonFilter.reset(rawLng, accuracy);
         } else {
             consecutiveRejections = 0;
         }
+
+        smoothedLat = latFilter.update(rawLat, accuracy);
+        smoothedLon = lonFilter.update(rawLng, accuracy);
+
+        currentLat = smoothedLat;
+        currentLon = smoothedLon;
+        currentAccuracy = accuracy;
 
         boolean lowAccuracy = accuracy > MAX_ACCEPTABLE_ACCURACY;
 
@@ -431,37 +472,46 @@ public class WorkoutService {
             stationaryCount = Math.max(0, stationaryCount - 1);
         }
 
-        if (isCurrentlyStationary || lowAccuracy) {
-            smoothedLat = WMA_WEIGHT * 0.3 * rawLat + (1 - WMA_WEIGHT * 0.3) * smoothedLat;
-            smoothedLon = WMA_WEIGHT * 0.3 * rawLng + (1 - WMA_WEIGHT * 0.3) * smoothedLon;
-        } else {
-            smoothedLat = WMA_WEIGHT * rawLat + (1 - WMA_WEIGHT) * smoothedLat;
-            smoothedLon = WMA_WEIGHT * rawLng + (1 - WMA_WEIGHT) * smoothedLon;
-        }
-
-        currentLat = smoothedLat;
-        currentLon = smoothedLon;
-        currentAccuracy = accuracy;
-
         if (!isDeadlockRecovery && !isCurrentlyStationary && !lowAccuracy && rawDist >= 2.0) {
             TrackPoint point = new TrackPoint(store.nextTrackPointId(),
-                    currentRecord.getRecordId(), currentLat, currentLon, 0, timestamp, accuracy);
+                    currentRecord.getRecordId(), currentLat, currentLon, stepCount,
+                    timestamp, accuracy);
             store.saveTrackPoint(point);
 
             double smoothedDist = DistanceCalculator.haversineDistance(
                     lastAcceptedLat, lastAcceptedLon, smoothedLat, smoothedLon);
 
+            double stepDist = stepCount * userStepLengthM;
+            double deltaDist;
+
             double effectiveSpeed = (speed > 0 && speed < 20) ? speed : 3.33;
             double expectedDist = effectiveSpeed * timeDeltaSec;
 
             if (smoothedDist > expectedDist * 3 && smoothedDist > 30) {
-                accumulatedDistance += expectedDist;
+                deltaDist = expectedDist;
             } else {
-                accumulatedDistance += smoothedDist;
+                deltaDist = smoothedDist;
+            }
+
+            if (stepDist > 0 && smoothedDist > 5.0
+                    && Math.abs(smoothedDist - (stepDist - accumulatedDistance)) > 0.3 * smoothedDist) {
+                Log.d(TAG, "Step validation override: GPS dist=" + String.format("%.1f", deltaDist)
+                        + "m, step total=" + String.format("%.1f", stepDist)
+                        + "m, acc dist=" + String.format("%.1f", accumulatedDistance) + "m");
+                accumulatedDistance = Math.max(accumulatedDistance, stepDist);
+            } else {
+                accumulatedDistance += deltaDist;
             }
 
             lastAcceptedLat = smoothedLat;
             lastAcceptedLon = smoothedLon;
+        }
+
+        if (!isDeadlockRecovery && !isCurrentlyStationary && !lowAccuracy && rawDist < 2.0) {
+            double stepDist = stepCount * userStepLengthM;
+            if (stepDist > accumulatedDistance) {
+                accumulatedDistance = stepDist;
+            }
         }
 
         lastPointTime = timestamp;
@@ -472,7 +522,9 @@ public class WorkoutService {
                 + " acc=" + accuracy + "m"
                 + " spd=" + String.format("%.1f", speed) + "m/s"
                 + " stationary=" + isCurrentlyStationary
-                + " lowAcc=" + lowAccuracy);
+                + " lowAcc=" + lowAccuracy
+                + " steps=" + stepCount
+                + " totalDist=" + String.format("%.1f", accumulatedDistance) + "m");
 
         updateLiveMetrics(timestamp, accumulatedDistance);
     }
@@ -590,12 +642,22 @@ public class WorkoutService {
     private final SensorEventListener stepListener = new SensorEventListener() {
         @Override
         public void onSensorChanged(SensorEvent event) {
-            if (event.values.length > 0) {
+            if (event.values.length > 0 && currentRecord != null
+                    && currentRecord.getStatus() == WorkoutStatus.RUNNING) {
                 int totalSteps = (int) event.values[0];
                 if (stepCountStart < 0) {
                     stepCountStart = totalSteps;
                 }
-                stepCount = totalSteps - stepCountStart;
+                int newStepCount = totalSteps - stepCountStart;
+                if (newStepCount != stepCount) {
+                    stepCount = newStepCount;
+                    handler.post(() -> {
+                        if (currentRecord != null
+                                && currentRecord.getStatus() == WorkoutStatus.RUNNING) {
+                            updateLiveMetrics(System.currentTimeMillis(), accumulatedDistance);
+                        }
+                    });
+                }
             }
         }
 

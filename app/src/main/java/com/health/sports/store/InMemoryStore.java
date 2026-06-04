@@ -20,6 +20,48 @@ public class InMemoryStore {
     private final Map<String, String> verificationCodes = new HashMap<String, String>();
     private final Map<Long, WorkoutRecord> recordsById = new HashMap<Long, WorkoutRecord>();
     private final Map<Long, List<TrackPoint>> trackPointsByRecordId = new HashMap<Long, List<TrackPoint>>();
+    private final DatabaseHelper db;
+
+    public InMemoryStore() {
+        this.db = null;
+    }
+
+    public InMemoryStore(DatabaseHelper db) {
+        this.db = db;
+        this.userIdSequence = db.nextUserId() + 1;
+        this.recordIdSequence = db.nextRecordId() + 1;
+        this.trackPointIdSequence = db.nextTrackPointId() + 1;
+        loadFromDatabase();
+    }
+
+    private void loadFromDatabase() {
+        if (db == null) return;
+        try {
+            List<User> users = db.getAllUsers();
+            for (User u : users) {
+                usersById.put(u.getUserId(), u);
+                userIdsByMobile.put(u.getMobile(), u.getUserId());
+            }
+        } catch (Exception e) {
+            android.util.Log.e("InMemoryStore", "Failed to load users from DB", e);
+        }
+        try {
+            List<HealthProfile> profiles = db.getAllHealthProfiles();
+            for (HealthProfile p : profiles) {
+                profilesByUserId.put(p.getUserId(), p);
+            }
+        } catch (Exception e) {
+            android.util.Log.e("InMemoryStore", "Failed to load profiles from DB", e);
+        }
+        try {
+            List<WorkoutRecord> records = db.getAllWorkoutRecords();
+            for (WorkoutRecord r : records) {
+                recordsById.put(r.getRecordId(), r);
+            }
+        } catch (Exception e) {
+            android.util.Log.e("InMemoryStore", "Failed to load records from DB", e);
+        }
+    }
 
     public long nextUserId() {
         userIdSequence += 1;
@@ -39,6 +81,7 @@ public class InMemoryStore {
     public void saveUser(User user) {
         usersById.put(user.getUserId(), user);
         userIdsByMobile.put(user.getMobile(), user.getUserId());
+        if (db != null) db.saveUser(user);
     }
 
     public User findUserById(long userId) {
@@ -56,6 +99,7 @@ public class InMemoryStore {
 
     public void saveVerificationCode(String mobile, String code) {
         verificationCodes.put(mobile, code);
+        if (db != null) db.saveVerificationCode(mobile, code);
     }
 
     public String findVerificationCode(String mobile) {
@@ -64,6 +108,7 @@ public class InMemoryStore {
 
     public void saveHealthProfile(HealthProfile profile) {
         profilesByUserId.put(profile.getUserId(), profile);
+        if (db != null) db.saveHealthProfile(profile);
     }
 
     public HealthProfile findHealthProfile(long userId) {
@@ -72,6 +117,7 @@ public class InMemoryStore {
 
     public void saveWorkoutRecord(WorkoutRecord record) {
         recordsById.put(record.getRecordId(), record);
+        if (db != null) db.saveWorkoutRecord(record);
     }
 
     public WorkoutRecord findWorkoutRecord(long recordId) {
@@ -95,6 +141,7 @@ public class InMemoryStore {
             trackPointsByRecordId.put(point.getRecordId(), points);
         }
         points.add(point);
+        if (db != null) db.saveTrackPoint(point);
     }
 
     public List<TrackPoint> findTrackPointsByRecordId(long recordId) {

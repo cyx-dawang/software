@@ -25,7 +25,7 @@ public class HealthProfileService {
         if (profile == null) {
             profile = new HealthProfile(userId, gender, birthDate, heightCm, weightKg, activityLevel);
         } else {
-            profile.update(gender, birthDate, heightCm, weightKg, activityLevel);
+            profile.update(gender, birthDate, heightCm, weightKg, activityLevel, 0, 0, 0);
         }
         store.saveHealthProfile(profile);
         return profile;
