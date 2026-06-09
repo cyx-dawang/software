@@ -1,6 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
-        <item name="android:colorAccent">#1D7A8C</item>
-        <item name="android:windowBackground">#F6F8FA</item>
+        <item name="android:colorAccent">@color/aurora_green</item>
+        <item name="android:windowBackground">@color/background_light</item>
+        <item name="android:statusBarColor">@color/deep_sea_blue</item>
+        <item name="android:navigationBarColor">@color/deep_sea_blue</item>
+    </style>
+
+    <style name="AppTheme.Dark" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:colorAccent">@color/aurora_green</item>
+        <item name="android:windowBackground">@color/background_dark</item>
+        <item name="android:statusBarColor">@color/black</item>
+        <item name="android:navigationBarColor">@color/black</item>
+    </style>
+
+    <style name="CardStyle">
+        <item name="android:background">@drawable/card_bg</item>
+        <item name="android:elevation">8dp</item>
+        <item name="android:padding">@dimen/padding_large</item>
+        <item name="android:layout_marginBottom">@dimen/padding_medium</item>
+    </style>
+
+    <style name="CardStyle.Rounded">
+        <item name="android:background">@drawable/card_bg_rounded</item>
+        <item name="android:elevation">8dp</item>
+        <item name="android:padding">@dimen/padding_large</item>
+        <item name="android:layout_marginBottom">@dimen/padding_medium</item>
+    </style>
+
+    <style name="PrimaryButton">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/button_height</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:backgroundTint">@color/deep_sea_blue</item>
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.05</item>
+        <item name="android:elevation">4dp</item>
+    </style>
+
+    <style name="AccentButton">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/button_height</item>
+        <item name="android:textColor">@color/deep_sea_blue</item>
+        <item name="android:backgroundTint">@color/aurora_green</item>
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.05</item>
+        <item name="android:elevation">4dp</item>
+    </style>
+
+    <style name="OutlineButton">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/button_height</item>
+        <item name="android:textColor">@color/deep_sea_blue</item>
+        <item name="android:background">@drawable/outline_button_bg</item>
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.05</item>
+    </style>
+
+    <style name="DangerButton">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/button_height</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:backgroundTint">@color/danger</item>
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.05</item>
+        <item name="android:elevation">4dp</item>
+    </style>
+
+    <style name="OutlinedInput">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/button_height</item>
+        <item name="android:background">@drawable/input_bg</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:textColor">@color/text_primary_light</item>
+        <item name="android:textColorHint">@color/text_hint_light</item>
+    </style>
+
+    <style name="SectionTitle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/text_primary_light</item>
+        <item name="android:textSize">@dimen/text_title</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.02</item>
+    </style>
+
+    <style name="SectionSubtitle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/text_secondary_light</item>
+        <item name="android:textSize">@dimen/text_body</item>
+    </style>
+
+    <style name="MetricValue">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">@dimen/text_metric</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">-0.02</item>
+    </style>
+
+    <style name="MetricValue.Large">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">48sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">-0.03</item>
+    </style>
+
+    <style name="MetricLabel">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">@color/text_secondary_light</item>
+    </style>
+
+    <style name="NavButton">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">@dimen/nav_button_height</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.05</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">@drawable/nav_button_bg</item>
+    </style>
+
+    <style name="NavButton.Active">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">@dimen/nav_button_height</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.05</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">@drawable/nav_button_active_bg</item>
+    </style>
+
+    <style name="ProgressBar">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">8dp</item>
+        <item name="android:progressDrawable">@drawable/progress_bar</item>
     </style>
 </resources>

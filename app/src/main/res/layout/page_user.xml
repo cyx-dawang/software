@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/userRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="\uD83D\uDC64 个人资料"
+        android:textColor="@color/text_primary_light"
+        android:textSize="@dimen/text_headline"
+        android:textStyle="bold"
+        android:paddingBottom="20dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/card_bg_rounded"
+        android:elevation="8dp"
+        android:padding="@dimen/padding_xlarge">
+
+        <EditText
+            android:id="@+id/nicknameInput"
+            style="@style/OutlinedInput"
+            android:hint="昵称"
+            android:layout_marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/avatarInput"
+            style="@style/OutlinedInput"
+            android:hint="头像地址（可选）" />
+
+        <Button
+            android:id="@+id/loadUserBtn"
+            style="@style/PrimaryButton"
+            android:text="加载当前用户"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/saveUserBtn"
+            style="@style/AccentButton"
+            android:text="保存资料" />
+    </LinearLayout>
+
+</LinearLayout>

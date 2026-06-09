@@ -3,76 +3,16 @@
     android:id="@+id/dashboardRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="@dimen/padding_large">
+    android:orientation="vertical">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="健康数据看板"
-        android:textColor="@color/textPrimary"
-        android:textSize="@dimen/text_subtitle"
+        android:text="\uD83D\uDCCA 健康数据看板"
+        android:textColor="@color/text_primary_light"
+        android:textSize="@dimen/text_headline"
         android:textStyle="bold"
-        android:paddingBottom="12dp" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="8dp">
-
-        <LinearLayout
-            android:id="@+id/stepsCard"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:background="@color/white"
-            android:padding="14dp"
-            android:layout_marginEnd="4dp">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="步数"
-                android:textColor="@color/textSecondary"
-                android:textSize="13sp" />
-            <TextView
-                android:id="@+id/stepsValue"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="--"
-                android:textColor="@color/accent"
-                android:textSize="@dimen/text_metric"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/caloriesCard"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:background="@color/white"
-            android:padding="14dp"
-            android:layout_marginStart="4dp">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="消耗"
-                android:textColor="@color/textSecondary"
-                android:textSize="13sp" />
-            <TextView
-                android:id="@+id/caloriesValue"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="--"
-                android:textColor="@color/textPrimary"
-                android:textSize="@dimen/text_metric"
-                android:textStyle="bold" />
-        </LinearLayout>
-    </LinearLayout>
+        android:paddingBottom="20dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -81,29 +21,82 @@
         android:layout_marginBottom="12dp">
 
         <LinearLayout
+            android:id="@+id/stepsCard"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg_rounded"
+            android:elevation="8dp"
+            android:padding="@dimen/padding_xlarge"
+            android:layout_marginEnd="6dp">
+            <TextView style="@style/MetricLabel" android:text="\uD83D\uDC63 步数" android:textColor="@color/text_secondary_light" />
+            <TextView
+                android:id="@+id/stepsValue"
+                style="@style/MetricValue.Large"
+                android:text="--"
+                android:textColor="@color/aurora_green" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="步"
+                android:textColor="@color/text_hint_light"
+                android:textSize="@dimen/text_caption" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/caloriesCard"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg_rounded"
+            android:elevation="8dp"
+            android:padding="@dimen/padding_xlarge"
+            android:layout_marginStart="6dp">
+            <TextView style="@style/MetricLabel" android:text="\uD83D\uDD25 消耗" android:textColor="@color/text_secondary_light" />
+            <TextView
+                android:id="@+id/caloriesValue"
+                style="@style/MetricValue.Large"
+                android:text="--"
+                android:textColor="@color/text_primary_light" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="kcal"
+                android:textColor="@color/text_hint_light"
+                android:textSize="@dimen/text_caption" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="16dp">
+
+        <LinearLayout
             android:id="@+id/heartRateCard"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:background="@color/white"
-            android:padding="14dp"
-            android:layout_marginEnd="4dp">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="心率"
-                android:textColor="@color/textSecondary"
-                android:textSize="13sp" />
+            android:background="@drawable/card_bg_rounded"
+            android:elevation="8dp"
+            android:padding="@dimen/padding_xlarge"
+            android:layout_marginEnd="6dp">
+            <TextView style="@style/MetricLabel" android:text="\u2764 心率" android:textColor="@color/text_secondary_light" />
             <TextView
                 android:id="@+id/heartRateValue"
+                style="@style/MetricValue.Large"
+                android:text="--"
+                android:textColor="@color/coral_orange" />
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="--"
-                android:textColor="@color/coral"
-                android:textSize="@dimen/text_metric"
-                android:textStyle="bold" />
+                android:text="bpm"
+                android:textColor="@color/text_hint_light"
+                android:textSize="@dimen/text_caption" />
         </LinearLayout>
 
         <LinearLayout
@@ -112,24 +105,22 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:background="@color/white"
-            android:padding="14dp"
-            android:layout_marginStart="4dp">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="睡眠"
-                android:textColor="@color/textSecondary"
-                android:textSize="13sp" />
+            android:background="@drawable/card_bg_rounded"
+            android:elevation="8dp"
+            android:padding="@dimen/padding_xlarge"
+            android:layout_marginStart="6dp">
+            <TextView style="@style/MetricLabel" android:text="\uD83C\uDF19 睡眠" android:textColor="@color/text_secondary_light" />
             <TextView
                 android:id="@+id/sleepValue"
+                style="@style/MetricValue.Large"
+                android:text="--"
+                android:textColor="@color/deep_sea_blue" />
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="--"
-                android:textColor="@color/primaryDark"
-                android:textSize="@dimen/text_metric"
-                android:textStyle="bold" />
+                android:text="小时"
+                android:textColor="@color/text_hint_light"
+                android:textSize="@dimen/text_caption" />
         </LinearLayout>
     </LinearLayout>
 
@@ -138,25 +129,20 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
-        android:textColor="@color/textHint"
-        android:textSize="11sp"
-        android:paddingBottom="12dp" />
+        android:textColor="@color/text_hint_light"
+        android:textSize="12sp"
+        android:gravity="center"
+        android:paddingBottom="16dp" />
 
     <Button
         android:id="@+id/connectBtn"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/button_height"
-        android:text="连接健康应用"
-        android:textColor="@color/white"
-        android:backgroundTint="@color/primary" />
+        style="@style/AccentButton"
+        android:text="\uD83D\uDCF6 连接健康应用"
+        android:layout_marginBottom="12dp" />
 
     <Button
         android:id="@+id/refreshDashboardBtn"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/button_height"
-        android:text="立即同步"
-        android:textColor="@color/white"
-        android:backgroundTint="@color/primary"
-        android:layout_marginTop="8dp" />
+        style="@style/PrimaryButton"
+        android:text="\uD83D\uDD04 立即同步" />
 
 </LinearLayout>

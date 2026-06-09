@@ -3,55 +3,60 @@
     android:id="@+id/reportRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="@dimen/padding_large">
+    android:orientation="vertical">
 
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="运动总结报告"
-        android:textColor="@color/textPrimary"
-        android:textSize="@dimen/text_subtitle"
-        android:textStyle="bold"
-        android:paddingBottom="12dp" />
-
-    <TextView
-        android:id="@+id/reportDate"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="@color/textSecondary"
-        android:textSize="13sp"
-        android:paddingBottom="16dp" />
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingBottom="20dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="\uD83C\uDFC6"
+            android:textSize="48sp"
+            android:paddingBottom="8dp" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="运动总结报告"
+            android:textColor="@color/text_primary_light"
+            android:textSize="@dimen/text_headline"
+            android:textStyle="bold"
+            android:gravity="center" />
+        <TextView
+            android:id="@+id/reportDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="@color/text_secondary_light"
+            android:textSize="@dimen/text_body"
+            android:gravity="center"
+            android:paddingTop="6dp" />
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginBottom="8dp">
+        android:layout_marginBottom="12dp">
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:background="@color/white"
-            android:padding="@dimen/padding_medium"
-            android:layout_marginEnd="4dp">
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="总距离"
-                android:textColor="@color/textSecondary"
-                android:textSize="13sp" />
+            android:background="@drawable/card_bg_rounded"
+            android:elevation="8dp"
+            android:padding="@dimen/padding_xlarge"
+            android:layout_marginEnd="6dp">
+            <TextView style="@style/MetricLabel" android:text="\uD83C\uDFC3 总距离" android:textColor="@color/text_secondary_light" />
             <TextView
                 android:id="@+id/reportDistance"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                style="@style/MetricValue.Large"
                 android:text="--"
-                android:textColor="@color/accent"
-                android:textSize="@dimen/text_metric"
-                android:textStyle="bold" />
+                android:textColor="@color/aurora_green" />
         </LinearLayout>
 
         <LinearLayout
@@ -59,23 +64,16 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:background="@color/white"
-            android:padding="@dimen/padding_medium"
-            android:layout_marginStart="4dp">
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="总时长"
-                android:textColor="@color/textSecondary"
-                android:textSize="13sp" />
+            android:background="@drawable/card_bg_rounded"
+            android:elevation="8dp"
+            android:padding="@dimen/padding_xlarge"
+            android:layout_marginStart="6dp">
+            <TextView style="@style/MetricLabel" android:text="\u23F1 总时长" android:textColor="@color/text_secondary_light" />
             <TextView
                 android:id="@+id/reportDuration"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="--"
-                android:textColor="@color/primaryDark"
-                android:textSize="@dimen/text_metric"
-                android:textStyle="bold" />
+                style="@style/MetricValue.Large"
+                android:text="--:--"
+                android:textColor="@color/deep_sea_blue" />
         </LinearLayout>
     </LinearLayout>
 
@@ -90,23 +88,16 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:background="@color/white"
-            android:padding="@dimen/padding_medium"
-            android:layout_marginEnd="4dp">
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="平均配速"
-                android:textColor="@color/textSecondary"
-                android:textSize="13sp" />
+            android:background="@drawable/card_bg_rounded"
+            android:elevation="8dp"
+            android:padding="@dimen/padding_xlarge"
+            android:layout_marginEnd="6dp">
+            <TextView style="@style/MetricLabel" android:text="\u26A1 平均配速" android:textColor="@color/text_secondary_light" />
             <TextView
                 android:id="@+id/reportPace"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="--"
-                android:textColor="@color/coral"
-                android:textSize="@dimen/text_metric"
-                android:textStyle="bold" />
+                style="@style/MetricValue"
+                android:text="--'--&quot;"
+                android:textColor="@color/coral_orange" />
         </LinearLayout>
 
         <LinearLayout
@@ -114,24 +105,42 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:background="@color/white"
-            android:padding="@dimen/padding_medium"
-            android:layout_marginStart="4dp">
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="消耗"
-                android:textColor="@color/textSecondary"
-                android:textSize="13sp" />
+            android:background="@drawable/card_bg_rounded"
+            android:elevation="8dp"
+            android:padding="@dimen/padding_xlarge"
+            android:layout_marginStart="6dp">
+            <TextView style="@style/MetricLabel" android:text="\uD83D\uDD25 消耗" android:textColor="@color/text_secondary_light" />
             <TextView
                 android:id="@+id/reportCalories"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                style="@style/MetricValue"
                 android:text="--"
-                android:textColor="@color/textPrimary"
-                android:textSize="@dimen/text_metric"
-                android:textStyle="bold" />
+                android:textColor="@color/text_primary_light" />
         </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/card_bg_rounded"
+        android:elevation="8dp"
+        android:padding="@dimen/padding_xlarge"
+        android:layout_marginBottom="16dp">
+        <TextView
+            android:id="@+id/reportSteps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="\uD83D\uDC63 步数: -- 步"
+            android:textColor="@color/text_primary_light"
+            android:textSize="@dimen/text_body"
+            android:paddingBottom="6dp" />
+        <TextView
+            android:id="@+id/reportSpeed"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="\uD83D\uDCC8 平均速度: -- km/h"
+            android:textColor="@color/text_secondary_light"
+            android:textSize="@dimen/text_body" />
     </LinearLayout>
 
     <LinearLayout
@@ -139,7 +148,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="8dp">
+        android:layout_marginBottom="12dp">
 
         <Button
             android:id="@+id/reportSaveBtn"
@@ -147,9 +156,8 @@
             android:layout_height="@dimen/button_height"
             android:layout_weight="1"
             android:text="@string/save_record"
-            android:textColor="@color/primaryDark"
-            android:backgroundTint="@color/accent"
-            android:layout_marginEnd="4dp" />
+            style="@style/AccentButton"
+            android:layout_marginEnd="8dp" />
 
         <Button
             android:id="@+id/reportDiscardBtn"
@@ -157,17 +165,15 @@
             android:layout_height="@dimen/button_height"
             android:layout_weight="1"
             android:text="@string/discard_record"
-            android:textColor="@color/white"
-            android:backgroundTint="@color/danger"
-            android:layout_marginStart="4dp" />
+            style="@style/DangerButton"
+            android:layout_marginStart="8dp" />
     </LinearLayout>
 
     <Button
         android:id="@+id/reportAgainBtn"
         android:layout_width="match_parent"
         android:layout_height="@dimen/button_height"
-        android:text="再跑一次"
-        android:textColor="@color/primary"
-        android:backgroundTint="@color/divider" />
+        android:text="\uD83D\uDD04 再跑一次"
+        style="@style/OutlineButton" />
 
 </LinearLayout>

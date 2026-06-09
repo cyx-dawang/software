@@ -5,6 +5,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.LocationManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -33,6 +34,7 @@ public class WorkoutService {
     private final InMemoryStore store;
     private final AccountService accountService;
     private final HealthProfileService profileService;
+    private final Context appContext;
     private final LocationClient locationClient;
     private final SensorManager sensorManager;
     private final Handler handler;
@@ -84,14 +86,14 @@ public class WorkoutService {
         this.store = store;
         this.accountService = accountService;
         this.profileService = profileService;
+        this.appContext = context.getApplicationContext();
         this.handler = new Handler(Looper.getMainLooper());
 
-        sensorManager = (SensorManager) context.getApplicationContext()
-                .getSystemService(Context.SENSOR_SERVICE);
+        sensorManager = (SensorManager) this.appContext.getSystemService(Context.SENSOR_SERVICE);
 
         LocationClient client;
         try {
-            client = new LocationClient(context.getApplicationContext());
+            client = new LocationClient(this.appContext);
         } catch (Exception e) {
             client = null;
         }
@@ -105,14 +107,23 @@ public class WorkoutService {
             option.setCoorType("bd09ll");
             option.setScanSpan(5000);
             option.setOpenGps(true);
+            option.setNeedDeviceDirect(true);
             option.setLocationNotify(true);
             option.setIgnoreKillProcess(false);
             option.setIsNeedAddress(false);
             option.setIsNeedLocationDescribe(false);
-            option.setNeedDeviceDirect(false);
             option.setIsNeedAltitude(false);
             option.setWifiCacheTimeOut(5 * 60 * 1000);
+
+            try {
+                option.setPriority(LocationClientOption.GPS_FIRST);
+            } catch (NoSuchMethodError e) {
+                Log.w(TAG, "setPriority not available in this SDK version, using default");
+            }
+
             locationClient.setLocOption(option);
+
+            Log.i(TAG, "LocationClient configured: mode=Hight_Accuracy, scan=5000ms, GPS=ON");
         }
     }
 
@@ -264,6 +275,16 @@ public class WorkoutService {
 
     public float getCurrentAccuracy() {
         return currentAccuracy;
+    }
+
+    public boolean isGpsProviderEnabled() {
+        if (appContext == null) return false;
+        LocationManager lm = (LocationManager) appContext.getSystemService(Context.LOCATION_SERVICE);
+        return lm != null && lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
+    }
+
+    public int getStepCount() {
+        return stepCount;
     }
 
     public String getGpsStatusText() {

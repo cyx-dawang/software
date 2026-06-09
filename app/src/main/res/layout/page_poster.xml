@@ -3,17 +3,16 @@
     android:id="@+id/posterRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="@dimen/padding_large">
+    android:orientation="vertical">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="成就海报预览"
-        android:textColor="@color/textPrimary"
-        android:textSize="@dimen/text_subtitle"
+        android:text="\uD83C\uDFA8 成就海报预览"
+        android:textColor="@color/text_primary_light"
+        android:textSize="@dimen/text_headline"
         android:textStyle="bold"
-        android:paddingBottom="16dp" />
+        android:paddingBottom="20dp" />
 
     <LinearLayout
         android:id="@+id/posterCard"
@@ -21,8 +20,16 @@
         android:layout_height="@dimen/poster_height"
         android:orientation="vertical"
         android:gravity="center"
-        android:background="@color/primary"
-        android:padding="@dimen/padding_xlarge">
+        android:background="@drawable/header_bg"
+        android:elevation="12dp"
+        android:padding="@dimen/padding_xxlarge">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="\uD83C\uDFC6"
+            android:textSize="44sp"
+            android:paddingBottom="12dp" />
 
         <TextView
             android:id="@+id/posterTitle"
@@ -30,7 +37,8 @@
             android:layout_height="wrap_content"
             android:text="运动成就"
             android:textColor="@color/white"
-            android:textSize="@dimen/text_subtitle"
+            android:textSize="@dimen/text_title"
+            android:textStyle="bold"
             android:gravity="center" />
 
         <TextView
@@ -38,11 +46,18 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="-- KM"
-            android:textColor="@color/accent"
-            android:textSize="@dimen/text_poster"
+            android:textColor="@color/aurora_green"
+            android:textSize="56sp"
             android:textStyle="bold"
             android:gravity="center"
-            android:paddingTop="10dp" />
+            android:paddingTop="12dp" />
+
+        <View
+            android:layout_width="80dp"
+            android:layout_height="3dp"
+            android:background="@color/aurora_green"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp" />
 
         <TextView
             android:id="@+id/posterPace"
@@ -50,7 +65,7 @@
             android:layout_height="wrap_content"
             android:text=""
             android:textColor="@color/white"
-            android:textSize="@dimen/text_body"
+            android:textSize="@dimen/text_subtitle"
             android:gravity="center" />
 
         <TextView
@@ -59,27 +74,21 @@
             android:layout_height="wrap_content"
             android:text=""
             android:textColor="#B4C8DC"
-            android:textSize="13sp"
+            android:textSize="@dimen/text_body"
             android:gravity="center"
             android:paddingTop="20dp" />
     </LinearLayout>
 
     <Button
         android:id="@+id/posterShareBtn"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/button_height"
-        android:text="分享到社交平台"
-        android:textColor="@color/primaryDark"
-        android:backgroundTint="@color/accent"
-        android:layout_marginTop="16dp" />
+        style="@style/AccentButton"
+        android:text="\uD83D\uDCF2 分享到社交平台"
+        android:layout_marginTop="20dp" />
 
     <Button
         android:id="@+id/posterBackBtn"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/button_height"
-        android:text="返回"
-        android:textColor="@color/primary"
-        android:backgroundTint="@color/divider"
-        android:layout_marginTop="8dp" />
+        style="@style/OutlineButton"
+        android:text="\u2190 返回"
+        android:layout_marginTop="12dp" />
 
 </LinearLayout>

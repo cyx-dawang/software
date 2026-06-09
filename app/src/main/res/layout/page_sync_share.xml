@@ -3,55 +3,81 @@
     android:id="@+id/syncRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="@dimen/padding_large">
+    android:orientation="vertical">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="同步与成就分享"
-        android:textColor="@color/textPrimary"
-        android:textSize="@dimen/text_subtitle"
+        android:text="\uD83D\uDD17 同步与成就分享"
+        android:textColor="@color/text_primary_light"
+        android:textSize="@dimen/text_headline"
         android:textStyle="bold"
-        android:paddingBottom="12dp" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="同步服务"
-        android:textColor="@color/textPrimary"
-        android:textSize="@dimen/text_body"
-        android:paddingBottom="8dp" />
-
-    <Button
-        android:id="@+id/connectWearBtn"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/button_height"
-        android:text="连接穿戴设备"
-        android:textColor="@color/primaryDark"
-        android:backgroundTint="@color/accent"
-        android:layout_marginBottom="20dp" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="运动成就分享"
-        android:textColor="@color/textPrimary"
-        android:textSize="@dimen/text_body"
-        android:paddingBottom="8dp" />
+        android:paddingBottom="20dp" />
 
     <LinearLayout
-        android:id="@+id/recordsList"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical" />
+        android:orientation="vertical"
+        android:background="@drawable/card_bg_rounded"
+        android:elevation="8dp"
+        android:padding="@dimen/padding_xlarge"
+        android:layout_marginBottom="16dp">
 
-    <TextView
-        android:id="@+id/noRecordsHint"
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="\u231A 同步服务"
+            android:textColor="@color/text_primary_light"
+            android:textSize="@dimen/text_subtitle"
+            android:textStyle="bold"
+            android:paddingBottom="12dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="连接您的智能穿戴设备，自动同步健康数据"
+            android:textColor="@color/text_secondary_light"
+            android:textSize="@dimen/text_body"
+            android:paddingBottom="16dp" />
+
+        <Button
+            android:id="@+id/connectWearBtn"
+            style="@style/AccentButton"
+            android:text="\uD83D\uDCF6 连接穿戴设备" />
+    </LinearLayout>
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="暂无运动记录，快去跑步吧"
-        android:textColor="@color/textSecondary"
-        android:textSize="@dimen/text_body" />
+        android:orientation="vertical"
+        android:background="@drawable/card_bg_rounded"
+        android:elevation="8dp"
+        android:padding="@dimen/padding_xlarge">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="\uD83C\uDFC6 运动成就分享"
+            android:textColor="@color/text_primary_light"
+            android:textSize="@dimen/text_subtitle"
+            android:textStyle="bold"
+            android:paddingBottom="12dp" />
+
+        <LinearLayout
+            android:id="@+id/recordsList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <TextView
+            android:id="@+id/noRecordsHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="\uD83C\uDFC3 暂无运动记录，快去跑步吧！"
+            android:textColor="@color/text_secondary_light"
+            android:textSize="@dimen/text_body"
+            android:gravity="center"
+            android:padding="24dp" />
+    </LinearLayout>
 
 </LinearLayout>

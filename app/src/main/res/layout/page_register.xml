@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/loginRoot"
+    android:id="@+id/registerRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical">
@@ -56,37 +56,75 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="\uD83D\uDD11 账号密码登录"
+                android:text="\uD83D\uDCF1 手机号注册"
                 android:textColor="@color/text_primary_light"
                 android:textSize="@dimen/text_subtitle"
                 android:textStyle="bold" />
         </LinearLayout>
 
         <EditText
-            android:id="@+id/loginMobile"
+            android:id="@+id/registerMobile"
             style="@style/OutlinedInput"
-            android:hint="手机号"
+            android:hint="手机号，如 13800138000"
             android:inputType="phone"
             android:layout_marginBottom="12dp" />
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <EditText
+                android:id="@+id/registerCode"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/button_height"
+                android:layout_weight="1"
+                android:background="@drawable/input_bg"
+                android:hint="验证码"
+                android:singleLine="true"
+                android:textSize="@dimen/text_body"
+                android:textColor="@color/text_primary_light"
+                android:textColorHint="@color/text_hint_light"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:layout_marginEnd="12dp" />
+
+            <Button
+                android:id="@+id/sendCodeBtn"
+                android:layout_width="120dp"
+                android:layout_height="@dimen/button_height"
+                android:text="发送验证码"
+                android:textColor="@color/white"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:backgroundTint="@color/deep_sea_blue" />
+        </LinearLayout>
+
         <EditText
-            android:id="@+id/loginPassword"
+            android:id="@+id/registerPassword"
             style="@style/OutlinedInput"
-            android:hint="密码"
+            android:hint="密码，至少6位"
             android:inputType="textPassword"
+            android:layout_marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/registerNickname"
+            style="@style/OutlinedInput"
+            android:hint="昵称"
             android:layout_marginBottom="16dp" />
 
         <Button
-            android:id="@+id/loginBtn"
-            style="@style/PrimaryButton"
-            android:text="登录" />
+            android:id="@+id/registerBtn"
+            style="@style/AccentButton"
+            android:text="注册并进入" />
     </LinearLayout>
 
     <Button
-        android:id="@+id/switchToRegister"
+        android:id="@+id/switchToLogin"
         android:layout_width="match_parent"
         android:layout_height="@dimen/button_height"
-        android:text="没有账号？去注册"
+        android:text="已有账号？去登录"
         android:textColor="@color/deep_sea_blue"
         android:backgroundTint="@color/divider_light"
         android:textSize="@dimen/text_body"

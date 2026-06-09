@@ -3,16 +3,14 @@
     android:id="@+id/trainingRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="@dimen/padding_large">
+    android:orientation="vertical">
 
     <TextView
-        android:id="@+id/trainingTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="个性化运动计划"
-        android:textColor="@color/textPrimary"
-        android:textSize="@dimen/text_subtitle"
+        android:text="\uD83D\uDCC5 个性化运动计划"
+        android:textColor="@color/text_primary_light"
+        android:textSize="@dimen/text_headline"
         android:textStyle="bold"
         android:paddingBottom="8dp" />
 
@@ -21,32 +19,29 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
-        android:textColor="@color/textSecondary"
+        android:textColor="@color/text_secondary_light"
         android:textSize="@dimen/text_body"
-        android:paddingBottom="4dp" />
+        android:paddingBottom="12dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="6dp"
+        android:layout_height="10dp"
         android:orientation="horizontal"
-        android:layout_marginBottom="8dp">
+        android:background="@color/divider_light"
+        android:layout_marginBottom="16dp">
 
         <View
+            android:id="@+id/progressFill"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="0.6"
-            android:background="@color/accent" />
-        <View
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="0.4"
-            android:background="@color/divider" />
+            android:background="@drawable/progress_bar" />
     </LinearLayout>
 
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp">
+        android:layout_marginBottom="16dp"
+        android:scrollbars="none">
 
         <LinearLayout
             android:id="@+id/dateSelector"
@@ -60,54 +55,64 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="@color/white"
-        android:padding="@dimen/padding_large"
-        android:layout_marginBottom="12dp">
+        android:background="@drawable/card_bg_rounded"
+        android:elevation="8dp"
+        android:padding="@dimen/padding_xlarge"
+        android:layout_marginBottom="16dp">
 
         <TextView
             android:id="@+id/dayExerciseType"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text=""
-            android:textColor="@color/primaryDark"
+            android:textColor="@color/deep_sea_blue"
             android:textSize="@dimen/text_subtitle"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:paddingBottom="8dp" />
 
-        <TextView
-            android:id="@+id/dayIntensity"
+        <View
+            android:layout_width="48dp"
+            android:layout_height="4dp"
+            android:background="@color/aurora_green"
+            android:layout_marginBottom="12dp" />
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text=""
-            android:textColor="@color/coral"
-            android:textSize="@dimen/text_body"
-            android:paddingTop="4dp" />
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
 
-        <TextView
-            android:id="@+id/dayDuration"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text=""
-            android:textColor="@color/textPrimary"
-            android:textSize="@dimen/text_body"
-            android:paddingTop="4dp" />
+            <TextView
+                android:id="@+id/dayIntensity"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="@color/coral_orange"
+                android:textSize="@dimen/text_body"
+                android:textStyle="bold"
+                android:paddingEnd="20dp" />
+            <TextView
+                android:id="@+id/dayDuration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="@color/text_primary_light"
+                android:textSize="@dimen/text_body" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/dayDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text=""
-            android:textColor="@color/textSecondary"
-            android:textSize="13sp"
-            android:paddingTop="6dp" />
+            android:textColor="@color/text_secondary_light"
+            android:textSize="@dimen/text_body"
+            android:paddingBottom="16dp" />
 
         <Button
             android:id="@+id/dayStartBtn"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/button_height"
-            android:text="开始运动"
-            android:textColor="@color/primaryDark"
-            android:backgroundTint="@color/accent"
-            android:layout_marginTop="12dp" />
+            style="@style/AccentButton"
+            android:text="\u25B6 开始运动" />
     </LinearLayout>
 
     <LinearLayout
@@ -118,10 +123,7 @@
 
     <Button
         android:id="@+id/createPlanBtn"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/button_height"
-        android:text="生成我的初始运动计划"
-        android:textColor="@color/primaryDark"
-        android:backgroundTint="@color/accent" />
+        style="@style/AccentButton"
+        android:text="\uD83C\uDFAF 生成我的初始运动计划" />
 
 </LinearLayout>

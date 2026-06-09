@@ -2,6 +2,7 @@ package com.health.sports;
 
 import android.app.Activity;
 import android.Manifest;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.Intent;
 import android.os.Bundle;
@@ -151,7 +152,21 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
             SDKInitializer.initialize(getApplicationContext());
             LocationClient.setAgreePrivacy(true);
             baiduSdkReady = true;
-            Log.i(TAG, "Baidu SDK initialized successfully");
+
+            String ak = "";
+            try {
+                ApplicationInfo ai = getPackageManager().getApplicationInfo(
+                        getPackageName(), PackageManager.GET_META_DATA);
+                ak = ai.metaData.getString("com.baidu.lbsapi.API_KEY");
+            } catch (Exception ignored) {}
+            Log.i(TAG, "Baidu SDK initialized | AK length=" + (ak != null ? ak.length() : 0)
+                    + " | pkg=" + getPackageName());
+
+            if (ak == null || ak.isEmpty() || ak.startsWith("${")) {
+                Log.e(TAG, "CRITICAL: Baidu AK is empty or unresolved. "
+                        + "Set BAIDU_MAP_AK=your_key in local.properties. "
+                        + "Map will show as grid!");
+            }
         } catch (Throwable t) {
             Log.e(TAG, "Baidu SDK init failed: " + t.getClass().getSimpleName(), t);
             baiduSdkReady = false;
@@ -296,25 +311,18 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     private void showRegisterPage() {
         cleanupMapView();
         content.removeAllViews();
-        content.addView(sectionTitle("手机号注册"));
+        View registerPage = getLayoutInflater().inflate(R.layout.page_register, content, false);
+        content.addView(registerPage);
 
-        registerMobile = input("手机号，如 13800138000", false);
-        registerCode = input("验证码", false);
+        registerMobile = registerPage.findViewById(R.id.registerMobile);
+        registerCode = registerPage.findViewById(R.id.registerCode);
+        registerPassword = registerPage.findViewById(R.id.registerPassword);
+        registerNickname = registerPage.findViewById(R.id.registerNickname);
         registerCode.setText("123456");
-        registerPassword = input("密码，至少6位", true);
-        registerNickname = input("昵称", false);
-        content.addView(registerMobile);
-        content.addView(registerCode);
-        content.addView(registerPassword);
-        content.addView(registerNickname);
 
-        Button codeButton = primaryButton("发送验证码");
-        Button registerButton = primaryButton("注册并进入");
-        content.addView(codeButton);
-        content.addView(registerButton);
-
-        Button switchToLogin = secondaryButton("已有账号？去登录");
-        content.addView(switchToLogin);
+        Button codeButton = registerPage.findViewById(R.id.sendCodeBtn);
+        Button registerButton = registerPage.findViewById(R.id.registerBtn);
+        Button switchToLogin = registerPage.findViewById(R.id.switchToLogin);
 
         codeButton.setOnClickListener(v -> runAction(() -> {
             String code = accountService.sendVerificationCode(registerMobile.getText().toString().trim());
@@ -333,18 +341,14 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     private void showLoginPage() {
         cleanupMapView();
         content.removeAllViews();
-        content.addView(sectionTitle("账号密码登录"));
+        View loginPage = getLayoutInflater().inflate(R.layout.page_login, content, false);
+        content.addView(loginPage);
 
-        loginMobile = input("手机号", false);
-        loginPassword = input("密码", true);
-        content.addView(loginMobile);
-        content.addView(loginPassword);
+        loginMobile = loginPage.findViewById(R.id.loginMobile);
+        loginPassword = loginPage.findViewById(R.id.loginPassword);
 
-        Button loginButton = primaryButton("登录");
-        content.addView(loginButton);
-
-        Button switchToRegister = secondaryButton("没有账号？去注册");
-        content.addView(switchToRegister);
+        Button loginButton = loginPage.findViewById(R.id.loginBtn);
+        Button switchToRegister = loginPage.findViewById(R.id.switchToRegister);
 
         loginButton.setOnClickListener(v -> runAction(() -> {
             User user = accountService.login(text(loginMobile), text(loginPassword));
@@ -357,16 +361,14 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     private void showUserPage() {
         cleanupMapView();
         content.removeAllViews();
-        content.addView(sectionTitle("个人资料"));
-        nicknameInput = input("昵称", false);
-        avatarInput = input("头像地址，可选", false);
-        content.addView(nicknameInput);
-        content.addView(avatarInput);
+        View userPage = getLayoutInflater().inflate(R.layout.page_user, content, false);
+        content.addView(userPage);
 
-        Button loadButton = primaryButton("加载当前用户");
-        Button saveButton = primaryButton("保存资料");
-        content.addView(loadButton);
-        content.addView(saveButton);
+        nicknameInput = userPage.findViewById(R.id.nicknameInput);
+        avatarInput = userPage.findViewById(R.id.avatarInput);
+
+        Button loadButton = userPage.findViewById(R.id.loadUserBtn);
+        Button saveButton = userPage.findViewById(R.id.saveUserBtn);
 
         loadButton.setOnClickListener(v -> runAction(() -> fillUserFields(requireLogin())));
         saveButton.setOnClickListener(v -> runAction(() -> {
@@ -380,35 +382,31 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     private void showProfilePage() {
         cleanupMapView();
         content.removeAllViews();
-        content.addView(sectionTitle("健康档案"));
-        genderInput = spinner(new String[]{"MALE", "FEMALE", "UNKNOWN"});
-        birthDateInput = input("出生日期 yyyy-MM-dd", false);
-        heightInput = input("身高 cm", false);
-        weightInput = input("体重 kg", false);
-        activityInput = spinner(new String[]{"LOW", "MODERATE", "HIGH"});
+        View profilePage = getLayoutInflater().inflate(R.layout.page_health_profile, content, false);
+        content.addView(profilePage);
+
+        genderInput = profilePage.findViewById(R.id.genderInput);
+        ArrayAdapter<String> genderAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{"MALE", "FEMALE", "UNKNOWN"});
+        genderAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        genderInput.setAdapter(genderAdapter);
+
+        birthDateInput = profilePage.findViewById(R.id.birthDateInput);
+        heightInput = profilePage.findViewById(R.id.heightInput);
+        weightInput = profilePage.findViewById(R.id.weightInput);
+        activityInput = profilePage.findViewById(R.id.activityInput);
+
+        ArrayAdapter<String> activityAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{"LOW", "MODERATE", "HIGH"});
+        activityAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        activityInput.setAdapter(activityAdapter);
+
         birthDateInput.setText("2003-01-01");
         heightInput.setText("170");
         weightInput.setText("60");
 
-        content.addView(label("性别"));
-        content.addView(genderInput);
-        content.addView(birthDateInput);
-        content.addView(heightInput);
-        content.addView(weightInput);
-        content.addView(label("活动水平"));
-        content.addView(activityInput);
+        profileResult = profilePage.findViewById(R.id.profileResult);
 
-        Button saveButton = primaryButton("保存健康档案");
-        Button loadButton = primaryButton("查询健康档案");
-        content.addView(saveButton);
-        content.addView(loadButton);
-
-        profileResult = new TextView(this);
-        profileResult.setTextColor(Color.rgb(37, 52, 66));
-        profileResult.setTextSize(15);
-        profileResult.setPadding(dp(14), dp(14), dp(14), dp(14));
-        profileResult.setBackgroundColor(Color.WHITE);
-        content.addView(profileResult, blockParams());
+        Button saveButton = profilePage.findViewById(R.id.saveProfileBtn);
+        Button loadButton = profilePage.findViewById(R.id.loadProfileBtn);
 
         saveButton.setOnClickListener(v -> runAction(() -> {
             User user = requireLogin();
@@ -448,6 +446,10 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
 
             workoutStartBtn.setOnClickListener(v -> runAction(() -> {
                 User user = requireLogin();
+                if (!workoutService.isGpsProviderEnabled()) {
+                    toast("请先开启手机GPS定位服务");
+                    return;
+                }
                 workoutService.startWorkout(user.getUserId());
             }));
             return;
@@ -551,44 +553,36 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
 
     private void showWorkoutReportPage(WorkoutRecord record) {
         content.removeAllViews();
-        content.addView(sectionTitle("运动总结报告"));
+        View reportPage = getLayoutInflater().inflate(R.layout.page_report, content, false);
+        content.addView(reportPage);
 
         double distanceKm = record.getTotalDistanceKm();
 
-        TextView dateView = new TextView(this);
+        TextView dateView = reportPage.findViewById(R.id.reportDate);
         dateView.setText("运动记录 #" + record.getRecordId());
-        dateView.setTextColor(Color.rgb(102, 102, 102));
-        dateView.setTextSize(13);
-        dateView.setPadding(0, 0, 0, dp(12));
-        content.addView(dateView);
 
-        workoutReportContainer = new LinearLayout(this);
-        workoutReportContainer.setOrientation(LinearLayout.VERTICAL);
-        content.addView(workoutReportContainer);
+        TextView distanceView = reportPage.findViewById(R.id.reportDistance);
+        distanceView.setText(String.format("%.2f km", distanceKm));
 
-        LinearLayout distanceCard = reportCard("总距离", String.format("%.2f", distanceKm) + " km", Color.rgb(0, 229, 178));
-        LinearLayout durationCard = reportCard("总时长", record.formatDuration(), Color.rgb(30, 42, 94));
-        LinearLayout paceCard = reportCard("平均配速", record.formatPace(), Color.rgb(255, 127, 80));
-        LinearLayout caloriesCard = reportCard("消耗卡路里", (int) record.getTotalCalories() + " kcal", Color.rgb(100, 100, 100));
+        TextView durationView = reportPage.findViewById(R.id.reportDuration);
+        durationView.setText(record.formatDuration());
 
-        workoutReportContainer.addView(distanceCard);
-        workoutReportContainer.addView(durationCard);
-        workoutReportContainer.addView(paceCard);
-        workoutReportContainer.addView(caloriesCard);
+        TextView paceView = reportPage.findViewById(R.id.reportPace);
+        paceView.setText(record.formatPace());
 
-        LinearLayout reportButtons = new LinearLayout(this);
-        reportButtons.setOrientation(LinearLayout.HORIZONTAL);
+        TextView caloriesView = reportPage.findViewById(R.id.reportCalories);
+        caloriesView.setText((int) record.getTotalCalories() + " kcal");
 
-        Button saveBtn = primaryButton("保存记录");
-        saveBtn.setBackgroundColor(Color.rgb(0, 229, 178));
-        saveBtn.setTextColor(Color.rgb(30, 42, 94));
-        Button discardBtn = dangerButton("丢弃记录");
-        Button againBtn = secondaryButton("再跑一次");
+        TextView stepsView = reportPage.findViewById(R.id.reportSteps);
+        stepsView.setText("\uD83D\uDC63 步数: " + workoutService.getStepCount() + " 步");
 
-        reportButtons.addView(saveBtn, weightParams());
-        reportButtons.addView(discardBtn, weightParams());
-        content.addView(reportButtons);
-        content.addView(againBtn);
+        TextView speedView = reportPage.findViewById(R.id.reportSpeed);
+        double speedKmh = distanceKm > 0 ? distanceKm / (record.getTotalDurationSeconds() / 3600.0) : 0;
+        speedView.setText("\uD83D\uDCC8 平均速度: " + String.format("%.1f km/h", speedKmh));
+
+        Button saveBtn = reportPage.findViewById(R.id.reportSaveBtn);
+        Button discardBtn = reportPage.findViewById(R.id.reportDiscardBtn);
+        Button againBtn = reportPage.findViewById(R.id.reportAgainBtn);
 
         saveBtn.setOnClickListener(v -> runAction(() -> {
             toast("已保存至历史记录");
@@ -752,7 +746,8 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     private void showDashboardPage() {
         cleanupMapView();
         content.removeAllViews();
-        content.addView(sectionTitle("健康数据看板"));
+        View dashboardPage = getLayoutInflater().inflate(R.layout.page_dashboard, content, false);
+        content.addView(dashboardPage);
 
         if (currentUser == null) {
             content.addView(label("请先登录"));
@@ -774,36 +769,39 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
             return;
         }
 
-        LinearLayout stepsCard = dashboardCard("步数", data.getStepCount() + "/8000", Color.rgb(0, 229, 178));
-        LinearLayout hrCard = dashboardCard("心率", "平均" + data.getHeartRateAvg()
-                + " · 最高" + data.getHeartRateMax() + " bpm", Color.rgb(255, 127, 80));
-        LinearLayout sleepCard = dashboardCard("睡眠", data.getSleepDurationMinutes() / 60 + "小时"
-                + data.getSleepDurationMinutes() % 60 + "分", Color.rgb(30, 42, 94));
-        LinearLayout caloriesCard = dashboardCard("消耗", String.format("%.0f", data.getCaloriesBurned()) + " kcal",
-                Color.rgb(100, 100, 100));
+        TextView stepsView = dashboardPage.findViewById(R.id.stepsValue);
+        stepsView.setText(data.getStepCount() + "");
 
-        content.addView(stepsCard);
-        content.addView(hrCard);
-        content.addView(sleepCard);
-        content.addView(caloriesCard);
+        TextView caloriesDashView = dashboardPage.findViewById(R.id.caloriesValue);
+        caloriesDashView.setText(String.format("%.0f", data.getCaloriesBurned()));
+
+        TextView hrView = dashboardPage.findViewById(R.id.heartRateValue);
+        hrView.setText("均" + data.getHeartRateAvg() + " 高" + data.getHeartRateMax());
+
+        TextView sleepView = dashboardPage.findViewById(R.id.sleepValue);
+        sleepView.setText(String.format("%.1f", data.getSleepDurationMinutes() / 60.0));
 
         if (data.getSourceType() != null) {
-            TextView sourceView = new TextView(this);
-            sourceView.setText("数据来源: " + data.getSourceType() + " | 同步时间: " + data.getSyncTime());
-            sourceView.setTextColor(Color.rgb(153, 153, 153));
-            sourceView.setTextSize(11);
-            sourceView.setPadding(0, dp(12), 0, 0);
-            content.addView(sourceView);
+            TextView sourceView = dashboardPage.findViewById(R.id.sourceView);
+            sourceView.setText("数据来源: " + data.getSourceType() + " | 同步: " + data.getSyncTime());
         }
 
-        Button refreshBtn = secondaryButton("立即同步");
+        Button connectBtn = dashboardPage.findViewById(R.id.connectBtn);
+        connectBtn.setOnClickListener(v -> runAction(() -> {
+            User user = requireLogin();
+            healthSyncService.addSyncSource(user.getUserId(), "wearable_watch");
+            healthSyncService.syncSingleSource(user.getUserId(), "wearable_watch");
+            toast("已连接并同步数据");
+            showDashboardPage();
+        }));
+
+        Button refreshBtn = dashboardPage.findViewById(R.id.refreshDashboardBtn);
         refreshBtn.setOnClickListener(v -> runAction(() -> {
             User user = requireLogin();
             healthSyncService.syncSingleSource(user.getUserId(), "wearable_watch");
             toast("数据已更新");
             showDashboardPage();
         }));
-        content.addView(refreshBtn);
     }
 
     private LinearLayout dashboardCard(String label, String value, int color) {
@@ -831,17 +829,15 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     private void showSyncSharePage() {
         cleanupMapView();
         content.removeAllViews();
-        content.addView(sectionTitle("同步与成就分享"));
+        View syncPage = getLayoutInflater().inflate(R.layout.page_sync_share, content, false);
+        content.addView(syncPage);
 
         if (currentUser == null) {
             content.addView(label("请先登录"));
             return;
         }
 
-        content.addView(label("同步服务"));
-        Button syncBtn = primaryButton("连接穿戴设备");
-        syncBtn.setBackgroundColor(Color.rgb(0, 229, 178));
-        syncBtn.setTextColor(Color.rgb(30, 42, 94));
+        Button syncBtn = syncPage.findViewById(R.id.connectWearBtn);
         syncBtn.setOnClickListener(v -> runAction(() -> {
             User user = requireLogin();
             healthSyncService.addSyncSource(user.getUserId(), "wearable_watch");
@@ -849,107 +845,81 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
             toast("同步" + ("SUCCESS".equals(result) ? "成功" : "失败"));
             showSyncSharePage();
         }));
-        content.addView(syncBtn);
 
-        content.addView(sectionTitle("运动成就分享"));
+        LinearLayout recordsList = syncPage.findViewById(R.id.recordsList);
+        TextView noRecordsHint = syncPage.findViewById(R.id.noRecordsHint);
 
         List<WorkoutRecord> records = workoutService.findUserRecords(currentUser.getUserId());
-        if (records.isEmpty()) {
-            content.addView(label("暂无运动记录，快去跑步吧"));
-            return;
-        }
-
+        boolean hasCompleted = false;
         for (WorkoutRecord rec : records) {
             if (rec.getStatus() != WorkoutStatus.COMPLETED) {
                 continue;
             }
+            hasCompleted = true;
             LinearLayout recCard = new LinearLayout(this);
             recCard.setOrientation(LinearLayout.VERTICAL);
+            recCard.setBackground(getResources().getDrawable(R.drawable.card_bg));
             recCard.setPadding(dp(12), dp(10), dp(12), dp(10));
-            recCard.setBackgroundColor(Color.WHITE);
             recCard.setLayoutParams(blockParams());
 
             TextView titleView = new TextView(this);
-            titleView.setText("运动记录 #" + rec.getRecordId() + " - " + String.format("%.2f", rec.getTotalDistanceKm()) + "km");
-            titleView.setTextColor(Color.rgb(30, 42, 94));
+            titleView.setText("\uD83C\uDFC3 运动记录 #" + rec.getRecordId() + " - " + String.format("%.2f", rec.getTotalDistanceKm()) + "km");
+            titleView.setTextColor(getResources().getColor(R.color.primaryDark));
             titleView.setTextSize(14);
             recCard.addView(titleView);
 
             TextView detailView = new TextView(this);
             detailView.setText("时长: " + rec.formatDuration() + " | 配速: " + rec.formatPace()
                     + " | 消耗: " + (int) rec.getTotalCalories() + "kcal");
-            detailView.setTextColor(Color.rgb(102, 102, 102));
+            detailView.setTextColor(getResources().getColor(R.color.textSecondary));
             detailView.setTextSize(12);
             recCard.addView(detailView);
 
-            content.addView(recCard);
-
-            Button shareBtn = secondaryButton("分享成就");
+            Button shareBtn = new Button(this);
+            shareBtn.setText("\uD83D\uDCF2 分享成就");
+            shareBtn.setTextColor(getResources().getColor(R.color.primaryDark));
+            shareBtn.setBackgroundTintList(getResources().getColorStateList(R.color.accent));
+            shareBtn.setTextSize(13);
             shareBtn.setOnClickListener(v -> shareAchievement(rec));
-            content.addView(shareBtn);
+            recCard.addView(shareBtn);
+
+            recordsList.addView(recCard);
+        }
+        if (!hasCompleted) {
+            noRecordsHint.setVisibility(View.VISIBLE);
+        } else {
+            noRecordsHint.setVisibility(View.GONE);
         }
     }
 
     private void shareAchievement(WorkoutRecord record) {
         cleanupMapView();
         content.removeAllViews();
-        content.addView(sectionTitle("成就海报预览"));
+        View posterPage = getLayoutInflater().inflate(R.layout.page_poster, content, false);
+        content.addView(posterPage);
 
-        LinearLayout posterCard = new LinearLayout(this);
-        posterCard.setOrientation(LinearLayout.VERTICAL);
-        posterCard.setPadding(dp(20), dp(24), dp(20), dp(24));
-        posterCard.setBackgroundColor(Color.rgb(29, 122, 140));
-        posterCard.setLayoutParams(new LinearLayout.LayoutParams(-1, dp(260)));
+        TextView posterDist = posterPage.findViewById(R.id.posterDistance);
+        posterDist.setText(String.format("%.2f KM", record.getTotalDistanceKm()));
 
-        TextView posterTitle = new TextView(this);
-        posterTitle.setText("运动成就");
-        posterTitle.setTextColor(Color.WHITE);
-        posterTitle.setTextSize(20);
-        posterTitle.setGravity(Gravity.CENTER);
-        posterCard.addView(posterTitle);
-
-        TextView posterDist = new TextView(this);
-        posterDist.setText(String.format("%.2f", record.getTotalDistanceKm()) + " KM");
-        posterDist.setTextColor(Color.rgb(0, 229, 178));
-        posterDist.setTextSize(40);
-        posterDist.setGravity(Gravity.CENTER);
-        posterDist.setPadding(0, dp(20), 0, dp(8));
-        posterCard.addView(posterDist);
-
-        TextView posterPace = new TextView(this);
+        TextView posterPace = posterPage.findViewById(R.id.posterPace);
         posterPace.setText("平均配速 " + record.formatPace()
                 + " | " + (int) record.getTotalCalories() + " kcal");
-        posterPace.setTextColor(Color.WHITE);
-        posterPace.setTextSize(14);
-        posterPace.setGravity(Gravity.CENTER);
-        posterCard.addView(posterPace);
 
-        TextView posterName = new TextView(this);
+        TextView posterName = posterPage.findViewById(R.id.posterName);
         posterName.setText("-- " + (currentUser != null ? currentUser.getNickname() : "运动者") + " --");
-        posterName.setTextColor(Color.rgb(180, 200, 220));
-        posterName.setTextSize(13);
-        posterName.setGravity(Gravity.CENTER);
-        posterName.setPadding(0, dp(28), 0, 0);
-        posterCard.addView(posterName);
 
-        content.addView(posterCard);
-
-        Button shareBtn = primaryButton("分享到社交平台");
-        shareBtn.setBackgroundColor(Color.rgb(0, 229, 178));
-        shareBtn.setTextColor(Color.rgb(30, 42, 94));
+        Button shareBtn = posterPage.findViewById(R.id.posterShareBtn);
         shareBtn.setOnClickListener(v -> {
             Intent shareIntent = new Intent(Intent.ACTION_SEND);
             shareIntent.setType("text/plain");
             shareIntent.putExtra(Intent.EXTRA_TEXT,
-                    "我在运动与健康App跑步" + String.format("%.2f", record.getTotalDistanceKm())
+                    "\uD83C\uDFC6 我在运动与健康App跑步" + String.format("%.2f", record.getTotalDistanceKm())
                             + "km！配速" + record.formatPace() + "，快来一起运动吧！");
             startActivity(Intent.createChooser(shareIntent, "分享成就"));
         });
-        content.addView(shareBtn);
 
-        Button backBtn = secondaryButton("返回");
+        Button backBtn = posterPage.findViewById(R.id.posterBackBtn);
         backBtn.setOnClickListener(v -> showSyncSharePage());
-        content.addView(backBtn);
     }
 
     private void cleanupMapView() {
@@ -1337,6 +1307,9 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
         Button button = new Button(this);
         button.setText(text);
         button.setAllCaps(false);
+        button.setTextColor(getResources().getColor(R.color.white));
+        button.setBackgroundColor(getResources().getColor(R.color.deep_sea_blue));
+        button.setTextSize(12);
         return button;
     }
 

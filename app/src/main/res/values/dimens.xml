@@ -1,18 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <dimen name="padding_xsmall">4dp</dimen>
     <dimen name="padding_small">8dp</dimen>
     <dimen name="padding_medium">12dp</dimen>
     <dimen name="padding_large">16dp</dimen>
     <dimen name="padding_xlarge">24dp</dimen>
-    <dimen name="text_title">20sp</dimen>
-    <dimen name="text_subtitle">16sp</dimen>
-    <dimen name="text_body">14sp</dimen>
+    <dimen name="padding_xxlarge">32dp</dimen>
+    
     <dimen name="text_caption">12sp</dimen>
+    <dimen name="text_body">14sp</dimen>
+    <dimen name="text_subtitle">16sp</dimen>
+    <dimen name="text_title">20sp</dimen>
+    <dimen name="text_headline">24sp</dimen>
     <dimen name="text_metric">28sp</dimen>
     <dimen name="text_poster">40sp</dimen>
+    
     <dimen name="button_height">48dp</dimen>
-    <dimen name="card_corner_radius">8dp</dimen>
+    <dimen name="button_height_large">56dp</dimen>
+    
+    <dimen name="card_corner_radius">12dp</dimen>
+    <dimen name="card_corner_radius_small">8dp</dimen>
+    <dimen name="card_corner_radius_large">16dp</dimen>
+    
     <dimen name="map_height">300dp</dimen>
-    <dimen name="poster_height">260dp</dimen>
+    <dimen name="poster_height">280dp</dimen>
+    
     <dimen name="nav_height">56dp</dimen>
+    <dimen name="nav_button_height">44dp</dimen>
+    
+    <dimen name="card_elevation">8dp</dimen>
+    <dimen name="button_elevation">4dp</dimen>
+    
+    <dimen name="input_corner_radius">8dp</dimen>
 </resources>

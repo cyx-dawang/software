@@ -3,86 +3,167 @@
     android:id="@+id/workoutRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="@dimen/padding_large">
+    android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/workoutTitle"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="户外跑步"
-        android:textColor="@color/textPrimary"
-        android:textSize="@dimen/text_subtitle"
-        android:textStyle="bold"
-        android:paddingBottom="10dp" />
-
-    <TextView
-        android:id="@+id/gpsStatusView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="正在搜索卫星..."
-        android:textColor="@color/textSecondary"
-        android:textSize="12sp" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingBottom="12dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="\uD83D\uDEE1"
+            android:textSize="16sp"
+            android:paddingEnd="8dp" />
+        <TextView
+            android:id="@+id/gpsStatusView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="正在搜索卫星..."
+            android:textColor="@color/text_secondary_light"
+            android:textSize="13sp" />
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/dataPanel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingTop="8dp">
+        android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/distanceView"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="总距离\n-- km"
-            android:textColor="@color/accent"
-            android:textSize="@dimen/text_subtitle"
-            android:padding="10dp"
-            android:background="@color/white"
-            android:layout_marginBottom="6dp" />
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
 
-        <TextView
-            android:id="@+id/durationView"
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:background="@drawable/card_bg_rounded"
+                android:elevation="8dp"
+                android:padding="@dimen/padding_xlarge"
+                android:layout_marginEnd="6dp">
+                <TextView
+                    style="@style/MetricLabel"
+                    android:text="\uD83C\uDFC3 总距离"
+                    android:textColor="@color/text_secondary_light" />
+                <TextView
+                    android:id="@+id/distanceView"
+                    style="@style/MetricValue.Large"
+                    android:text="--"
+                    android:textColor="@color/aurora_green"
+                    android:paddingTop="4dp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="km"
+                    android:textColor="@color/text_hint_light"
+                    android:textSize="@dimen/text_caption" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:background="@drawable/card_bg_rounded"
+                android:elevation="8dp"
+                android:padding="@dimen/padding_xlarge"
+                android:layout_marginStart="6dp">
+                <TextView
+                    style="@style/MetricLabel"
+                    android:text="\u23F1 时长"
+                    android:textColor="@color/text_secondary_light" />
+                <TextView
+                    android:id="@+id/durationView"
+                    style="@style/MetricValue.Large"
+                    android:text="--:--"
+                    android:textColor="@color/deep_sea_blue"
+                    android:paddingTop="4dp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="hh:mm:ss"
+                    android:textColor="@color/text_hint_light"
+                    android:textSize="@dimen/text_caption" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="时长\n--:--"
-            android:textColor="@color/primaryDark"
-            android:textSize="@dimen/text_subtitle"
-            android:padding="10dp"
-            android:background="@color/white"
-            android:layout_marginBottom="6dp" />
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
 
-        <TextView
-            android:id="@+id/paceView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="平均配速\n--'--''"
-            android:textColor="@color/coral"
-            android:textSize="@dimen/text_subtitle"
-            android:padding="10dp"
-            android:background="@color/white"
-            android:layout_marginBottom="6dp" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:background="@drawable/card_bg_rounded"
+                android:elevation="8dp"
+                android:padding="@dimen/padding_xlarge"
+                android:layout_marginEnd="6dp">
+                <TextView
+                    style="@style/MetricLabel"
+                    android:text="\u26A1 平均配速"
+                    android:textColor="@color/text_secondary_light" />
+                <TextView
+                    android:id="@+id/paceView"
+                    style="@style/MetricValue"
+                    android:text="--'--&quot;"
+                    android:textColor="@color/coral_orange"
+                    android:paddingTop="4dp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="min/km"
+                    android:textColor="@color/text_hint_light"
+                    android:textSize="@dimen/text_caption" />
+            </LinearLayout>
 
-        <TextView
-            android:id="@+id/caloriesView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="消耗\n-- kcal"
-            android:textColor="@color/textSecondary"
-            android:textSize="@dimen/text_subtitle"
-            android:padding="10dp"
-            android:background="@color/white"
-            android:layout_marginBottom="6dp" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:background="@drawable/card_bg_rounded"
+                android:elevation="8dp"
+                android:padding="@dimen/padding_xlarge"
+                android:layout_marginStart="6dp">
+                <TextView
+                    style="@style/MetricLabel"
+                    android:text="\uD83D\uDD25 消耗"
+                    android:textColor="@color/text_secondary_light" />
+                <TextView
+                    android:id="@+id/caloriesView"
+                    style="@style/MetricValue"
+                    android:text="--"
+                    android:textColor="@color/text_primary_light"
+                    android:paddingTop="4dp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="kcal"
+                    android:textColor="@color/text_hint_light"
+                    android:textSize="@dimen/text_caption" />
+            </LinearLayout>
+        </LinearLayout>
 
         <TextView
             android:id="@+id/statusHintView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text=""
-            android:textColor="@color/textSecondary"
-            android:textSize="13sp"
-            android:padding="4dp" />
+            android:textColor="@color/text_secondary_light"
+            android:textSize="@dimen/text_body"
+            android:gravity="center"
+            android:padding="8dp" />
     </LinearLayout>
 
     <LinearLayout
@@ -90,24 +171,24 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="8dp" />
+        android:gravity="center"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp" />
 
     <TextView
         android:id="@+id/workoutLabel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="准备开始一段新的跑步旅程"
-        android:textColor="@color/textSecondary"
+        android:text="\uD83C\uDFC3 准备开始一段新的跑步旅程"
+        android:textColor="@color/text_secondary_light"
         android:textSize="@dimen/text_body"
+        android:gravity="center"
         android:paddingTop="12dp" />
 
     <Button
         android:id="@+id/startRunBtn"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/button_height"
+        style="@style/AccentButton"
         android:text="@string/start_running"
-        android:textColor="@color/primaryDark"
-        android:backgroundTint="@color/accent"
-        android:layout_marginTop="12dp" />
+        android:layout_marginTop="16dp" />
 
 </LinearLayout>

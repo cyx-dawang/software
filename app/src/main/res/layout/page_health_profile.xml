@@ -2,127 +2,146 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="@dimen/padding_large">
+    android:orientation="vertical">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="健康档案"
-        android:textColor="@color/textPrimary"
-        android:textSize="@dimen/text_subtitle"
+        android:text="\uD83E\uDDE0 健康档案"
+        android:textColor="@color/text_primary_light"
+        android:textSize="@dimen/text_headline"
         android:textStyle="bold"
-        android:paddingBottom="10dp" />
+        android:paddingBottom="20dp" />
 
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="基本信息"
-        android:textColor="@color/textSecondary"
-        android:textSize="@dimen/text_body"
-        android:paddingBottom="4dp" />
+        android:orientation="vertical"
+        android:background="@drawable/card_bg_rounded"
+        android:elevation="8dp"
+        android:padding="@dimen/padding_xlarge"
+        android:layout_marginBottom="16dp">
 
-    <TextView
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="\uD83D\uDCCB 基本信息"
+            android:textColor="@color/text_primary_light"
+            android:textSize="@dimen/text_subtitle"
+            android:textStyle="bold"
+            android:paddingBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="性别"
+            android:textColor="@color/text_secondary_light"
+            android:textSize="13sp"
+            android:paddingBottom="6dp" />
+        <Spinner
+            android:id="@+id/genderInput"
+            style="@style/OutlinedInput"
+            android:layout_marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/birthDateInput"
+            style="@style/OutlinedInput"
+            android:hint="出生日期 (yyyy-MM-dd)"
+            android:layout_marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/heightInput"
+            style="@style/OutlinedInput"
+            android:hint="身高 (cm)"
+            android:inputType="number"
+            android:layout_marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/weightInput"
+            style="@style/OutlinedInput"
+            android:hint="体重 (kg)"
+            android:inputType="numberDecimal"
+            android:layout_marginBottom="16dp" />
+
+        <LinearLayout
+            android:id="@+id/bmiCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="#F0FAF8"
+            android:gravity="center_vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="BMI"
+                android:textColor="@color/deep_sea_blue"
+                android:textSize="@dimen/text_subtitle"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/bmiView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--"
+                android:textColor="@color/aurora_green"
+                android:textSize="@dimen/text_title"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="性别"
-        android:textColor="@color/textPrimary"
-        android:textSize="@dimen/text_body"
-        android:paddingTop="8dp" />
+        android:orientation="vertical"
+        android:background="@drawable/card_bg_rounded"
+        android:elevation="8dp"
+        android:padding="@dimen/padding_xlarge"
+        android:layout_marginBottom="16dp">
 
-    <Spinner
-        android:id="@+id/genderInput"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/button_height"
-        android:background="@color/white" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="\uD83C\uDF1F 选填信息"
+            android:textColor="@color/text_primary_light"
+            android:textSize="@dimen/text_subtitle"
+            android:textStyle="bold"
+            android:paddingBottom="16dp" />
 
-    <EditText
-        android:id="@+id/birthDateInput"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/button_height"
-        android:hint="出生日期 yyyy-MM-dd"
-        android:singleLine="true"
-        android:background="@color/white"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:layout_marginTop="6dp" />
-
-    <EditText
-        android:id="@+id/heightInput"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/button_height"
-        android:hint="身高 cm"
-        android:singleLine="true"
-        android:inputType="number"
-        android:background="@color/white"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:layout_marginTop="6dp" />
-
-    <EditText
-        android:id="@+id/weightInput"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/button_height"
-        android:hint="体重 kg"
-        android:singleLine="true"
-        android:inputType="numberDecimal"
-        android:background="@color/white"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:layout_marginTop="6dp" />
-
-    <TextView
-        android:id="@+id/bmiView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="BMI: --"
-        android:textColor="@color/accent"
-        android:textSize="@dimen/text_body"
-        android:padding="12dp"
-        android:background="@color/white"
-        android:layout_marginTop="6dp" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="活动水平"
-        android:textColor="@color/textPrimary"
-        android:textSize="@dimen/text_body"
-        android:paddingTop="8dp" />
-
-    <Spinner
-        android:id="@+id/activityInput"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/button_height"
-        android:background="@color/white"
-        android:layout_marginTop="6dp" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="活动水平"
+            android:textColor="@color/text_secondary_light"
+            android:textSize="13sp"
+            android:paddingBottom="6dp" />
+        <Spinner
+            android:id="@+id/activityInput"
+            style="@style/OutlinedInput" />
+    </LinearLayout>
 
     <Button
         android:id="@+id/saveProfileBtn"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/button_height"
-        android:text="保存健康档案"
-        android:textColor="@color/white"
-        android:backgroundTint="@color/primary"
-        android:layout_marginTop="16dp" />
+        style="@style/AccentButton"
+        android:text="\uD83D\uDCBE 保存健康档案"
+        android:layout_marginBottom="12dp" />
 
     <Button
         android:id="@+id/loadProfileBtn"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/button_height"
-        android:text="查询健康档案"
-        android:textColor="@color/white"
-        android:backgroundTint="@color/primary" />
+        style="@style/PrimaryButton"
+        android:text="\uD83D\uDD0D 查询健康档案" />
 
     <TextView
         android:id="@+id/profileResult"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
-        android:textColor="@color/textPrimary"
-        android:textSize="15sp"
-        android:padding="14dp"
-        android:background="@color/white"
-        android:layout_marginTop="6dp" />
+        android:textColor="@color/text_primary_light"
+        android:textSize="@dimen/text_body"
+        android:background="@drawable/card_bg_rounded"
+        android:elevation="8dp"
+        android:padding="@dimen/padding_xlarge"
+        android:layout_marginTop="16dp" />
 
 </LinearLayout>
