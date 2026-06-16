@@ -905,20 +905,31 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
             LinearLayout recCard = new LinearLayout(this);
             recCard.setOrientation(LinearLayout.VERTICAL);
             recCard.setBackground(getResources().getDrawable(R.drawable.card_bg));
-            recCard.setPadding(dp(12), dp(10), dp(12), dp(10));
-            recCard.setLayoutParams(blockParams());
+            recCard.setPadding(dp(14), dp(12), dp(14), dp(12));
+            recCard.setLayoutParams(recordCardParams());
 
             TextView titleView = new TextView(this);
-            titleView.setText("\uD83C\uDFC3 运动记录 #" + rec.getRecordId() + " - " + String.format("%.2f", rec.getTotalDistanceKm()) + "km");
+            titleView.setText("\uD83C\uDFC3 运动记录 #" + rec.getRecordId());
             titleView.setTextColor(getResources().getColor(R.color.primaryDark));
-            titleView.setTextSize(14);
+            titleView.setTextSize(15);
+            titleView.setPadding(0, 0, 0, dp(6));
             recCard.addView(titleView);
 
+            TextView distanceView = new TextView(this);
+            distanceView.setText(formatDistanceForCard(rec.getTotalDistanceKm()));
+            distanceView.setTextColor(getResources().getColor(R.color.accent));
+            distanceView.setTextSize(24);
+            distanceView.setPadding(0, 0, 0, dp(4));
+            recCard.addView(distanceView);
+
             TextView detailView = new TextView(this);
-            detailView.setText("时长: " + rec.formatDuration() + " | 配速: " + rec.formatPace()
-                    + " | 消耗: " + (int) rec.getTotalCalories() + "kcal");
+            detailView.setText("时长 " + rec.formatDuration()
+                    + "   配速 " + rec.formatPace()
+                    + "\n消耗 " + (int) rec.getTotalCalories() + " kcal");
             detailView.setTextColor(getResources().getColor(R.color.textSecondary));
             detailView.setTextSize(12);
+            detailView.setLineSpacing(dp(2), 1.0f);
+            detailView.setPadding(0, 0, 0, dp(8));
             recCard.addView(detailView);
 
             Button shareBtn = new Button(this);
@@ -926,6 +937,8 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
             shareBtn.setTextColor(getResources().getColor(R.color.primaryDark));
             shareBtn.setBackgroundTintList(getResources().getColorStateList(R.color.accent));
             shareBtn.setTextSize(13);
+            shareBtn.setAllCaps(false);
+            shareBtn.setLayoutParams(new LinearLayout.LayoutParams(-1, dp(44)));
             shareBtn.setOnClickListener(v -> shareAchievement(rec));
             recCard.addView(shareBtn);
 
@@ -1239,6 +1252,19 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
         params.setMargins(0, dp(6), 0, dp(8));
         return params;
+    }
+
+    private LinearLayout.LayoutParams recordCardParams() {
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
+        params.setMargins(0, dp(8), 0, dp(12));
+        return params;
+    }
+
+    private String formatDistanceForCard(double distanceKm) {
+        if (distanceKm > 0 && distanceKm < 0.01) {
+            return "< 0.01 km";
+        }
+        return String.format("%.2f km", distanceKm);
     }
 
     private Button secondaryButton(String text) {
