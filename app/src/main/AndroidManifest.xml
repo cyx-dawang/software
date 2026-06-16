@@ -22,6 +22,9 @@
         <meta-data
             android:name="com.baidu.lbsapi.API_KEY"
             android:value="${BAIDU_MAP_AK}" />
+        <meta-data
+            android:name="com.baidu.android.lbs.API_KEY"
+            android:value="${BAIDU_MAP_AK}" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

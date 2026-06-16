@@ -38,6 +38,7 @@ public class WorkoutService {
     private final LocationClient locationClient;
     private final SensorManager sensorManager;
     private final Handler handler;
+    private final boolean baiduLocationEnabled;
 
     private WorkoutRecord currentRecord;
     private double currentLat;
@@ -67,6 +68,8 @@ public class WorkoutService {
     private KalmanFilter latFilter;
     private KalmanFilter lonFilter;
     private double userStepLengthM;
+    private Runnable demoLocationRunnable;
+    private int demoTick;
     private static final double MIN_MOVE_SPEED_MS = 0.8;
     private static final double MAX_ACCEPTABLE_ACCURACY = 30.0;
     private static final double MAX_JUMP_METERS = 300.0;
@@ -82,19 +85,26 @@ public class WorkoutService {
     }
 
     public WorkoutService(InMemoryStore store, AccountService accountService,
-                          HealthProfileService profileService, Context context) {
+                          HealthProfileService profileService, Context context,
+                          boolean baiduLocationEnabled) {
         this.store = store;
         this.accountService = accountService;
         this.profileService = profileService;
         this.appContext = context.getApplicationContext();
         this.handler = new Handler(Looper.getMainLooper());
+        this.baiduLocationEnabled = baiduLocationEnabled;
 
         sensorManager = (SensorManager) this.appContext.getSystemService(Context.SENSOR_SERVICE);
 
         LocationClient client;
-        try {
-            client = new LocationClient(this.appContext);
-        } catch (Exception e) {
+        if (baiduLocationEnabled) {
+            try {
+                client = new LocationClient(this.appContext);
+            } catch (Exception e) {
+                Log.w(TAG, "Baidu LocationClient unavailable, falling back to demo location");
+                client = null;
+            }
+        } else {
             client = null;
         }
         this.locationClient = client;
@@ -124,6 +134,8 @@ public class WorkoutService {
             locationClient.setLocOption(option);
 
             Log.i(TAG, "LocationClient configured: mode=Hight_Accuracy, scan=5000ms, GPS=ON");
+        } else {
+            Log.i(TAG, "Baidu location disabled; demo location mode is active");
         }
     }
 
@@ -148,6 +160,15 @@ public class WorkoutService {
         pausedDurationMs = 0;
         accumulatedDistance = 0;
         initialLocationReceived = preloadedReceived;
+        currentAccuracy = preloadedReceived ? 8.0f : 0.0f;
+        smoothedLat = currentLat;
+        smoothedLon = currentLon;
+        lastAcceptedLat = currentLat;
+        lastAcceptedLon = currentLon;
+        stationaryCount = 0;
+        consecutiveRejections = 0;
+        gpsUpdateCount = 0;
+        demoTick = 0;
         stepCount = 0;
         stepCountStart = 0;
 
@@ -278,6 +299,9 @@ public class WorkoutService {
     }
 
     public boolean isGpsProviderEnabled() {
+        if (!baiduLocationEnabled) {
+            return true;
+        }
         if (appContext == null) return false;
         LocationManager lm = (LocationManager) appContext.getSystemService(Context.LOCATION_SERVICE);
         return lm != null && lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
@@ -288,6 +312,15 @@ public class WorkoutService {
     }
 
     public String getGpsStatusText() {
+        if (!baiduLocationEnabled) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("演示定位 · 模拟轨迹");
+            sb.append(" · 更新").append(gpsUpdateCount).append("次");
+            if (stepCount > 0) {
+                sb.append(" · ").append(stepCount).append("步");
+            }
+            return sb.toString();
+        }
         if (!initialLocationReceived && !preloadedReceived) {
             return "正在搜索卫星...";
         }
@@ -333,6 +366,19 @@ public class WorkoutService {
     }
 
     public void startPreloading() {
+        if (!baiduLocationEnabled) {
+            preloadedLat = FALLBACK_LAT;
+            preloadedLon = FALLBACK_LON;
+            boolean wasReceived = preloadedReceived;
+            preloadedReceived = true;
+            currentLat = preloadedLat;
+            currentLon = preloadedLon;
+            currentAccuracy = 8.0f;
+            if (!wasReceived && listener != null) {
+                listener.onGpsFixAcquired(preloadedLat, preloadedLon, currentAccuracy);
+            }
+            return;
+        }
         if (!locationStarted && locationClient != null) {
             preloadedReceived = false;
             locationClient.start();
@@ -343,7 +389,9 @@ public class WorkoutService {
 
     public void stopPreloading() {
         stopBaiduLocation();
-        preloadedReceived = false;
+        if (baiduLocationEnabled) {
+            preloadedReceived = false;
+        }
     }
 
     public boolean isPreloadedReceived() {
@@ -620,6 +668,10 @@ public class WorkoutService {
     }
 
     private void startBaiduLocation() {
+        if (!baiduLocationEnabled || locationClient == null) {
+            startDemoLocation();
+            return;
+        }
         if (!locationStarted && locationClient != null) {
             locationClient.start();
             locationStarted = true;
@@ -628,11 +680,47 @@ public class WorkoutService {
     }
 
     private void stopBaiduLocation() {
+        if (!baiduLocationEnabled || locationClient == null) {
+            stopDemoLocation();
+            return;
+        }
         if (locationStarted && locationClient != null) {
             locationClient.stop();
             locationStarted = false;
             Log.i(TAG, "Baidu LocationClient stopped");
         }
+    }
+
+    private void startDemoLocation() {
+        if (demoLocationRunnable != null) {
+            return;
+        }
+        locationStarted = true;
+        lastLocType = BDLocation.TypeGpsLocation;
+        demoLocationRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (currentRecord == null || currentRecord.getStatus() != WorkoutStatus.RUNNING) {
+                    return;
+                }
+                demoTick++;
+                double lat = FALLBACK_LAT + demoTick * 0.00003;
+                double lon = FALLBACK_LON + Math.sin(demoTick / 5.0) * 0.00002;
+                onLocationSample(lat, lon, 8.0f, 2.4f, System.currentTimeMillis());
+                handler.postDelayed(this, 2000);
+            }
+        };
+        handler.post(demoLocationRunnable);
+        Log.i(TAG, "Demo location started");
+    }
+
+    private void stopDemoLocation() {
+        if (demoLocationRunnable != null) {
+            handler.removeCallbacks(demoLocationRunnable);
+            demoLocationRunnable = null;
+        }
+        locationStarted = false;
+        Log.i(TAG, "Demo location stopped");
     }
 
     private void startStepCounter() {
@@ -690,6 +778,9 @@ public class WorkoutService {
     private Runnable watchdogRunnable;
 
     private void startWatchdog() {
+        if (!baiduLocationEnabled) {
+            return;
+        }
         stopWatchdog();
         watchdogRunnable = new Runnable() {
             @Override

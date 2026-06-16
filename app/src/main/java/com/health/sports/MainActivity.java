@@ -134,7 +134,8 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
         InMemoryStore store = new InMemoryStore(db);
         accountService = new AccountService(store, new PasswordHasher());
         profileService = new HealthProfileService(store, accountService);
-        workoutService = new WorkoutService(store, accountService, profileService, getApplicationContext());
+        workoutService = new WorkoutService(store, accountService, profileService,
+                getApplicationContext(), baiduSdkReady);
         workoutService.setListener(this);
         trainingPlanService = new TrainingPlanService(store, profileService);
         healthSyncService = new HealthSyncService(store, accountService, workoutService);
@@ -148,28 +149,41 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
 
     private void initBaiduSdk() {
         try {
+            String ak = getBaiduMapAk();
+            if (ak == null || ak.isEmpty() || ak.startsWith("${")) {
+                baiduSdkReady = false;
+                Log.w(TAG, "Baidu AK is not configured; map is disabled and workout uses demo location");
+                return;
+            }
+
             SDKInitializer.setAgreePrivacy(getApplicationContext(), true);
             SDKInitializer.initialize(getApplicationContext());
             LocationClient.setAgreePrivacy(true);
             baiduSdkReady = true;
 
-            String ak = "";
-            try {
-                ApplicationInfo ai = getPackageManager().getApplicationInfo(
-                        getPackageName(), PackageManager.GET_META_DATA);
-                ak = ai.metaData.getString("com.baidu.lbsapi.API_KEY");
-            } catch (Exception ignored) {}
             Log.i(TAG, "Baidu SDK initialized | AK length=" + (ak != null ? ak.length() : 0)
                     + " | pkg=" + getPackageName());
-
-            if (ak == null || ak.isEmpty() || ak.startsWith("${")) {
-                Log.e(TAG, "CRITICAL: Baidu AK is empty or unresolved. "
-                        + "Set BAIDU_MAP_AK=your_key in local.properties. "
-                        + "Map will show as grid!");
-            }
         } catch (Throwable t) {
             Log.e(TAG, "Baidu SDK init failed: " + t.getClass().getSimpleName(), t);
             baiduSdkReady = false;
+        }
+    }
+
+    private String getBaiduMapAk() {
+        try {
+            ApplicationInfo ai = getPackageManager().getApplicationInfo(
+                    getPackageName(), PackageManager.GET_META_DATA);
+            if (ai.metaData == null) {
+                return "";
+            }
+            String ak = ai.metaData.getString("com.baidu.lbsapi.API_KEY");
+            if (ak == null || ak.isEmpty()) {
+                ak = ai.metaData.getString("com.baidu.android.lbs.API_KEY");
+            }
+            return ak == null ? "" : ak.trim();
+        } catch (Exception e) {
+            Log.w(TAG, "Unable to read Baidu AK from manifest: " + e.getMessage());
+            return "";
         }
     }
 
@@ -334,6 +348,7 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
                     text(registerPassword), text(registerNickname));
             setCurrentUser(user);
             toast("注册成功，欢迎 " + user.getNickname());
+            showUserPage();
         }));
         switchToLogin.setOnClickListener(v -> showLoginPage());
     }
@@ -354,6 +369,7 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
             User user = accountService.login(text(loginMobile), text(loginPassword));
             setCurrentUser(user);
             toast("登录成功，欢迎回来 " + user.getNickname());
+            showUserPage();
         }));
         switchToRegister.setOnClickListener(v -> showRegisterPage());
     }
