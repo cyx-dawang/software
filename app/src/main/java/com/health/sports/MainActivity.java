@@ -305,7 +305,13 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
         navRow1.addView(profile, weightParams());
         navRow1.addView(workout, weightParams());
 
-        account.setOnClickListener(v -> showRegisterPage());
+        account.setOnClickListener(v -> {
+            if (currentUser == null) {
+                showLoginPage();
+            } else {
+                showUserPage();
+            }
+        });
         user.setOnClickListener(v -> showUserPage());
         profile.setOnClickListener(v -> showProfilePage());
         workout.setOnClickListener(v -> showWorkoutPage());
@@ -356,6 +362,10 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     private void showLoginPage() {
         cleanupMapView();
         content.removeAllViews();
+        if (currentUser != null) {
+            showUserPage();
+            return;
+        }
         View loginPage = getLayoutInflater().inflate(R.layout.page_login, content, false);
         content.addView(loginPage);
 
@@ -377,11 +387,16 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     private void showUserPage() {
         cleanupMapView();
         content.removeAllViews();
+        if (currentUser == null) {
+            showLoginPage();
+            return;
+        }
         View userPage = getLayoutInflater().inflate(R.layout.page_user, content, false);
         content.addView(userPage);
 
         nicknameInput = userPage.findViewById(R.id.nicknameInput);
         avatarInput = userPage.findViewById(R.id.avatarInput);
+        fillUserFields(currentUser);
 
         Button loadButton = userPage.findViewById(R.id.loadUserBtn);
         Button saveButton = userPage.findViewById(R.id.saveUserBtn);
@@ -471,14 +486,21 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
             return;
         }
 
-        content.addView(sectionTitle(status == WorkoutStatus.PAUSED ? "运动已暂停" : "运动进行中"));
+        LinearLayout workoutPage = new LinearLayout(this);
+        workoutPage.setOrientation(LinearLayout.VERTICAL);
+        workoutPage.setPadding(0, 0, 0, dp(18));
+        content.addView(workoutPage, new LinearLayout.LayoutParams(-1, -2));
+
+        TextView workoutTitle = sectionTitle(status == WorkoutStatus.PAUSED ? "运动已暂停" : "运动进行中");
+        workoutTitle.setPadding(0, dp(4), 0, dp(4));
+        workoutPage.addView(workoutTitle);
 
         workoutGpsView = new TextView(this);
         workoutGpsView.setText(workoutService.getGpsStatusText());
         workoutGpsView.setTextColor(Color.rgb(102, 102, 102));
         workoutGpsView.setTextSize(12);
-        workoutGpsView.setPadding(0, 0, 0, dp(6));
-        content.addView(workoutGpsView);
+        workoutGpsView.setPadding(0, 0, 0, dp(8));
+        workoutPage.addView(workoutGpsView);
 
         if (mapSlot != null && mapView != null) {
             mapSlot.setVisibility(View.VISIBLE);
@@ -486,7 +508,14 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
 
         workoutDataPanel = new LinearLayout(this);
         workoutDataPanel.setOrientation(LinearLayout.VERTICAL);
-        content.addView(workoutDataPanel);
+        workoutPage.addView(workoutDataPanel);
+
+        LinearLayout metricRow1 = new LinearLayout(this);
+        metricRow1.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout metricRow2 = new LinearLayout(this);
+        metricRow2.setOrientation(LinearLayout.HORIZONTAL);
+        workoutDataPanel.addView(metricRow1);
+        workoutDataPanel.addView(metricRow2);
 
         workoutDistanceView = dataMetric("总距离", "-- km", Color.rgb(0, 229, 178));
         workoutDurationView = dataMetric("时长", "--:--", Color.rgb(30, 42, 94));
@@ -496,15 +525,16 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
         workoutStatusView.setTextSize(13);
         workoutStatusView.setPadding(0, dp(8), 0, dp(4));
 
-        workoutDataPanel.addView(workoutDistanceView);
-        workoutDataPanel.addView(workoutDurationView);
-        workoutDataPanel.addView(workoutPaceView);
-        workoutDataPanel.addView(workoutCaloriesView);
+        metricRow1.addView(workoutDistanceView, metricParams(true));
+        metricRow1.addView(workoutDurationView, metricParams(false));
+        metricRow2.addView(workoutPaceView, metricParams(true));
+        metricRow2.addView(workoutCaloriesView, metricParams(false));
         workoutDataPanel.addView(workoutStatusView);
 
         workoutControls = new LinearLayout(this);
         workoutControls.setOrientation(LinearLayout.HORIZONTAL);
-        content.addView(workoutControls);
+        workoutControls.setPadding(0, dp(4), 0, dp(12));
+        workoutPage.addView(workoutControls);
 
         WorkoutRecord rec = workoutService.getCurrentRecord();
         if (status == WorkoutStatus.RUNNING) {
@@ -1174,10 +1204,10 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
         TextView view = new TextView(this);
         view.setText(label + "\n" + value);
         view.setTextColor(color);
-        view.setTextSize(16);
-        view.setPadding(dp(12), dp(10), dp(12), dp(10));
+        view.setTextSize(15);
+        view.setGravity(Gravity.CENTER_VERTICAL);
+        view.setPadding(dp(12), dp(8), dp(12), dp(8));
         view.setBackgroundColor(Color.WHITE);
-        view.setLayoutParams(blockParams());
         return view;
     }
 
@@ -1332,6 +1362,14 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     private LinearLayout.LayoutParams blockParams() {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, dp(48));
         params.setMargins(0, dp(6), 0, dp(8));
+        return params;
+    }
+
+    private LinearLayout.LayoutParams metricParams(boolean left) {
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, dp(72), 1);
+        int right = left ? dp(6) : 0;
+        int leftMargin = left ? 0 : dp(6);
+        params.setMargins(leftMargin, dp(5), right, dp(7));
         return params;
     }
 
