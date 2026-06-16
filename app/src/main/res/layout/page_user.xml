@@ -28,10 +28,39 @@
             android:hint="昵称"
             android:layout_marginBottom="12dp" />
 
-        <EditText
-            android:id="@+id/avatarInput"
-            style="@style/OutlinedInput"
-            android:hint="头像地址（可选）" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="头像照片"
+            android:textColor="@color/text_primary_light"
+            android:textSize="@dimen/text_subtitle"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <ImageView
+            android:id="@+id/avatarPreview"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:layout_gravity="center_horizontal"
+            android:background="@drawable/avatar_bg"
+            android:contentDescription="头像预览"
+            android:scaleType="centerCrop"
+            android:layout_marginBottom="10dp" />
+
+        <TextView
+            android:id="@+id/avatarHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="尚未选择头像照片"
+            android:textColor="@color/text_secondary_light"
+            android:textSize="@dimen/text_caption"
+            android:gravity="center"
+            android:layout_marginBottom="10dp" />
+
+        <Button
+            android:id="@+id/chooseAvatarBtn"
+            style="@style/OutlineButton"
+            android:text="选择头像照片" />
 
         <Button
             android:id="@+id/loadUserBtn"

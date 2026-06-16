@@ -5,6 +5,7 @@ import android.Manifest;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.graphics.Color;
 import android.util.Log;
@@ -17,6 +18,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -108,7 +110,9 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     private EditText loginPassword;
 
     private EditText nicknameInput;
-    private EditText avatarInput;
+    private ImageView avatarPreview;
+    private TextView avatarHint;
+    private String selectedAvatarUri;
     private Spinner genderInput;
     private EditText birthDateInput;
     private EditText heightInput;
@@ -117,6 +121,7 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     private TextView profileResult;
 
     private static final int REQUEST_PERMISSIONS = 100;
+    private static final int REQUEST_PICK_AVATAR = 200;
 
     private DatabaseHelper db;
 
@@ -232,6 +237,30 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
         if (!notificationGranted) {
             Log.w(TAG, "Notification permission denied");
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != REQUEST_PICK_AVATAR || resultCode != RESULT_OK || data == null) {
+            return;
+        }
+        Uri uri = data.getData();
+        if (uri == null) {
+            toast("未选择头像照片");
+            return;
+        }
+        try {
+            final int flags = data.getFlags()
+                    & (Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            getContentResolver().takePersistableUriPermission(uri, flags);
+        } catch (Exception e) {
+            Log.w(TAG, "Unable to persist avatar uri permission: " + e.getMessage());
+        }
+        selectedAvatarUri = uri.toString();
+        updateAvatarPreview(selectedAvatarUri);
+        toast("头像照片已选择");
     }
 
     @Override
@@ -395,16 +424,20 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
         content.addView(userPage);
 
         nicknameInput = userPage.findViewById(R.id.nicknameInput);
-        avatarInput = userPage.findViewById(R.id.avatarInput);
+        avatarPreview = userPage.findViewById(R.id.avatarPreview);
+        avatarHint = userPage.findViewById(R.id.avatarHint);
         fillUserFields(currentUser);
 
+        Button chooseAvatarButton = userPage.findViewById(R.id.chooseAvatarBtn);
         Button loadButton = userPage.findViewById(R.id.loadUserBtn);
         Button saveButton = userPage.findViewById(R.id.saveUserBtn);
 
+        chooseAvatarButton.setOnClickListener(v -> openAvatarPicker());
         loadButton.setOnClickListener(v -> runAction(() -> fillUserFields(requireLogin())));
         saveButton.setOnClickListener(v -> runAction(() -> {
             User user = requireLogin();
-            User updated = accountService.updateUserProfile(user.getUserId(), text(nicknameInput), text(avatarInput));
+            User updated = accountService.updateUserProfile(user.getUserId(),
+                    text(nicknameInput), selectedAvatarUri);
             setCurrentUser(updated);
             toast("个人资料已保存");
         }));
@@ -1302,6 +1335,34 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
         currentUserView.setText("当前用户：" + user.getNickname() + "  ID：" + user.getUserId());
     }
 
+    private void openAvatarPicker() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("image/*");
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        startActivityForResult(intent, REQUEST_PICK_AVATAR);
+    }
+
+    private void updateAvatarPreview(String avatarUri) {
+        if (avatarPreview == null || avatarHint == null) {
+            return;
+        }
+        if (avatarUri == null || avatarUri.trim().isEmpty()) {
+            avatarPreview.setImageDrawable(null);
+            avatarHint.setText("尚未选择头像照片");
+            return;
+        }
+        try {
+            avatarPreview.setImageURI(Uri.parse(avatarUri));
+            avatarHint.setText("已选择头像照片");
+        } catch (Exception e) {
+            Log.w(TAG, "Unable to load avatar preview: " + e.getMessage());
+            avatarPreview.setImageDrawable(null);
+            avatarHint.setText("头像照片暂时无法预览");
+        }
+    }
+
     private User requireLogin() {
         if (currentUser == null) {
             throw new ApiException(401, "请先完成注册或登录");
@@ -1311,7 +1372,8 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
 
     private void fillUserFields(User user) {
         nicknameInput.setText(user.getNickname());
-        avatarInput.setText(user.getAvatarUrl());
+        selectedAvatarUri = user.getAvatarUrl();
+        updateAvatarPreview(selectedAvatarUri);
     }
 
     private void showProfile(HealthProfile profile) {
