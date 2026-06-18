@@ -1,96 +1,193 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/loginRoot"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:fillViewport="true">
 
     <LinearLayout
+        android:id="@+id/loginRoot"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:paddingTop="32dp"
-        android:paddingBottom="24dp">
+        android:orientation="vertical">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="\u26F9"
-            android:textSize="56sp"
-            android:paddingBottom="12dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="运动与健康"
-            android:textColor="@color/deep_sea_blue"
-            android:textSize="26sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.1" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="每次运动，都是更好的自己"
-            android:textColor="@color/text_hint_light"
-            android:textSize="@dimen/text_body"
-            android:paddingTop="6dp" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="@drawable/card_bg_rounded"
-        android:elevation="8dp"
-        android:padding="@dimen/padding_xlarge">
-
+        <!-- Header -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingBottom="16dp">
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingTop="32dp"
+            android:paddingBottom="24dp">
+
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:gravity="center"
+                android:text="\u26F9\u200D\u2642\uFE0F"
+                android:textSize="40sp"
+                android:background="@drawable/card_bg_rounded"
+                android:padding="8dp"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="\uD83D\uDD11 账号密码登录"
-                android:textColor="@color/text_primary_light"
-                android:textSize="@dimen/text_subtitle"
-                android:textStyle="bold" />
+                android:text="运动与健康"
+                android:textColor="@color/deep_sea_blue"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.1" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="每次运动，都是更好的自己"
+                android:textColor="@color/text_hint_light"
+                android:textSize="@dimen/text_body"
+                android:paddingTop="6dp" />
         </LinearLayout>
 
-        <EditText
-            android:id="@+id/loginMobile"
-            style="@style/OutlinedInput"
-            android:hint="手机号"
-            android:inputType="phone"
-            android:layout_marginBottom="12dp" />
+        <!-- Login Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg_rounded"
+            android:elevation="8dp"
+            android:padding="@dimen/padding_xlarge"
+            android:layout_marginBottom="12dp">
 
-        <EditText
-            android:id="@+id/loginPassword"
-            style="@style/OutlinedInput"
-            android:hint="密码"
-            android:inputType="textPassword"
-            android:layout_marginBottom="16dp" />
+            <!-- Tab Switcher -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_height"
+                android:orientation="horizontal"
+                android:background="@drawable/input_bg"
+                android:layout_marginBottom="20dp"
+                android:padding="3dp">
+
+                <TextView
+                    android:id="@+id/tabCodeLogin"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="\uD83D\uDCF1 验证码登录"
+                    android:textColor="@color/deep_sea_blue"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/card_bg_rounded"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/tabPwdLogin"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="\uD83D\uDD11 密码登录"
+                    android:textColor="@color/text_hint_light"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:clickable="true"
+                    android:focusable="true" />
+            </LinearLayout>
+
+            <!-- Code Login Fields -->
+            <LinearLayout
+                android:id="@+id/codeLoginFields"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="visible">
+
+                <EditText
+                    android:id="@+id/loginMobile"
+                    style="@style/OutlinedInput"
+                    android:hint="手机号（如 13800138000）"
+                    android:inputType="phone"
+                    android:layout_marginBottom="12dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="16dp">
+
+                    <EditText
+                        android:id="@+id/loginCode"
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/button_height"
+                        android:layout_weight="1"
+                        android:background="@drawable/input_bg"
+                        android:hint="验证码"
+                        android:singleLine="true"
+                        android:inputType="number"
+                        android:maxLength="6"
+                        android:textSize="@dimen/text_body"
+                        android:textColor="@color/text_primary_light"
+                        android:textColorHint="@color/text_hint_light"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:layout_marginEnd="12dp" />
+
+                    <Button
+                        android:id="@+id/sendCodeBtn"
+                        android:layout_width="120dp"
+                        android:layout_height="@dimen/button_height"
+                        android:text="获取验证码"
+                        android:textColor="@color/white"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:backgroundTint="@color/deep_sea_blue" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/loginByCodeBtn"
+                    style="@style/AccentButton"
+                    android:text="验证码登录" />
+            </LinearLayout>
+
+            <!-- Password Login Fields -->
+            <LinearLayout
+                android:id="@+id/pwdLoginFields"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <EditText
+                    android:id="@+id/loginMobilePwd"
+                    style="@style/OutlinedInput"
+                    android:hint="手机号（如 13800138000）"
+                    android:inputType="phone"
+                    android:layout_marginBottom="12dp" />
+
+                <EditText
+                    android:id="@+id/loginPassword"
+                    style="@style/OutlinedInput"
+                    android:hint="密码（6-32位）"
+                    android:inputType="textPassword"
+                    android:layout_marginBottom="16dp" />
+
+                <Button
+                    android:id="@+id/loginBtn"
+                    style="@style/PrimaryButton"
+                    android:text="登录" />
+            </LinearLayout>
+        </LinearLayout>
 
         <Button
-            android:id="@+id/loginBtn"
-            style="@style/PrimaryButton"
-            android:text="登录" />
+            android:id="@+id/switchToRegister"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_height"
+            android:text="没有账号？去注册"
+            android:textColor="@color/deep_sea_blue"
+            android:backgroundTint="@color/divider_light"
+            android:textSize="@dimen/text_body"
+            android:textStyle="bold"
+            android:layout_marginTop="4dp" />
+
     </LinearLayout>
-
-    <Button
-        android:id="@+id/switchToRegister"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/button_height"
-        android:text="没有账号？去注册"
-        android:textColor="@color/deep_sea_blue"
-        android:backgroundTint="@color/divider_light"
-        android:textSize="@dimen/text_body"
-        android:textStyle="bold"
-        android:layout_marginTop="12dp" />
-
-</LinearLayout>
+</ScrollView>

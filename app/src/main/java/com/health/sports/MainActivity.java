@@ -7,6 +7,8 @@ import android.content.pm.PackageManager;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.graphics.Color;
 import android.util.Log;
 import android.text.InputType;
@@ -79,19 +81,22 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     private TextView titleView;
     private TextView currentUserView;
 
-    private LinearLayout workoutDataPanel;
-    private TextView workoutStatusView;
-    private TextView workoutDistanceView;
-    private TextView workoutPaceView;
-    private TextView workoutDurationView;
-    private TextView workoutCaloriesView;
+    // Workout page views from XML
+    private View workoutPageView;
+    private LinearLayout idlePanel;
+    private LinearLayout activePanel;
+    private LinearLayout confirmEndPanel;
     private TextView workoutGpsView;
-    private Button workoutPauseBtn;
-    private Button workoutResumeBtn;
-    private Button workoutEndBtn;
-    private Button workoutStartBtn;
-    private LinearLayout workoutControls;
-    private LinearLayout workoutReportContainer;
+    private TextView idleGpsStatusView;
+    private TextView workoutDistanceView;
+    private TextView workoutDurationView;
+    private TextView workoutPaceView;
+    private TextView workoutCaloriesView;
+    private TextView workoutStatusHintView;
+    private TextView workoutTitleView;
+    private TextView workoutTimerView;
+    private LinearLayout runningControls;
+    private LinearLayout pausedControls;
 
     private MapView mapView;
     private BaiduMap baiduMap;
@@ -101,6 +106,7 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     private boolean trackLineDirty;
     private LatLng lastAnimatedPoint;
     private Bundle savedState;
+    private final Handler uiHandler = new Handler(Looper.getMainLooper());
 
     private EditText registerMobile;
     private EditText registerCode;
@@ -398,18 +404,65 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
         View loginPage = getLayoutInflater().inflate(R.layout.page_login, content, false);
         content.addView(loginPage);
 
+        // Tab switching
+        TextView tabCode = loginPage.findViewById(R.id.tabCodeLogin);
+        TextView tabPwd = loginPage.findViewById(R.id.tabPwdLogin);
+        LinearLayout codeFields = loginPage.findViewById(R.id.codeLoginFields);
+        LinearLayout pwdFields = loginPage.findViewById(R.id.pwdLoginFields);
+
+        tabCode.setOnClickListener(v -> {
+            tabCode.setBackgroundResource(R.drawable.card_bg_rounded);
+            tabCode.setTextColor(getResources().getColor(R.color.deep_sea_blue));
+            tabPwd.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+            tabPwd.setTextColor(getResources().getColor(R.color.text_hint_light));
+            codeFields.setVisibility(View.VISIBLE);
+            pwdFields.setVisibility(View.GONE);
+        });
+        tabPwd.setOnClickListener(v -> {
+            tabPwd.setBackgroundResource(R.drawable.card_bg_rounded);
+            tabPwd.setTextColor(getResources().getColor(R.color.deep_sea_blue));
+            tabCode.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+            tabCode.setTextColor(getResources().getColor(R.color.text_hint_light));
+            codeFields.setVisibility(View.GONE);
+            pwdFields.setVisibility(View.VISIBLE);
+        });
+
+        // Code login fields
         loginMobile = loginPage.findViewById(R.id.loginMobile);
-        loginPassword = loginPage.findViewById(R.id.loginPassword);
+        EditText loginCode = loginPage.findViewById(R.id.loginCode);
+        Button sendCodeBtn = loginPage.findViewById(R.id.sendCodeBtn);
+        Button loginByCodeBtn = loginPage.findViewById(R.id.loginByCodeBtn);
 
-        Button loginButton = loginPage.findViewById(R.id.loginBtn);
-        Button switchToRegister = loginPage.findViewById(R.id.switchToRegister);
-
-        loginButton.setOnClickListener(v -> runAction(() -> {
-            User user = accountService.login(text(loginMobile), text(loginPassword));
+        sendCodeBtn.setOnClickListener(v -> runAction(() -> {
+            String code = accountService.sendVerificationCode(text(loginMobile));
+            loginCode.setText(code);
+            toast("验证码已生成：" + code);
+        }));
+        loginByCodeBtn.setOnClickListener(v -> runAction(() -> {
+            User user = accountService.loginByCode(text(loginMobile), text(loginCode));
             setCurrentUser(user);
             toast("登录成功，欢迎回来 " + user.getNickname());
             showUserPage();
         }));
+
+        // Password login fields
+        EditText loginMobilePwd = loginPage.findViewById(R.id.loginMobilePwd);
+        loginPassword = loginPage.findViewById(R.id.loginPassword);
+        Button loginBtn = loginPage.findViewById(R.id.loginBtn);
+
+        loginBtn.setOnClickListener(v -> runAction(() -> {
+            String mobile = text(loginMobilePwd);
+            if (mobile.isEmpty()) {
+                toast("请输入手机号");
+                return;
+            }
+            User user = accountService.login(mobile, text(loginPassword));
+            setCurrentUser(user);
+            toast("登录成功，欢迎回来 " + user.getNickname());
+            showUserPage();
+        }));
+
+        Button switchToRegister = loginPage.findViewById(R.id.switchToRegister);
         switchToRegister.setOnClickListener(v -> showRegisterPage());
     }
 
@@ -498,17 +551,45 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
             return;
         }
 
+        // Inflate workout XML layout
+        workoutPageView = getLayoutInflater().inflate(R.layout.page_workout, content, false);
+        content.addView(workoutPageView);
+
+        // Get view references
+        idlePanel = workoutPageView.findViewById(R.id.idlePanel);
+        activePanel = workoutPageView.findViewById(R.id.activePanel);
+        confirmEndPanel = workoutPageView.findViewById(R.id.confirmEndPanel);
+        runningControls = workoutPageView.findViewById(R.id.runningControls);
+        pausedControls = workoutPageView.findViewById(R.id.pausedControls);
+
         if (status == WorkoutStatus.IDLE) {
             workoutService.startPreloading();
-            content.addView(sectionTitle("户外跑步"));
-            content.addView(label("准备开始一段新的跑步旅程"));
 
-            workoutStartBtn = primaryButton("开始跑步");
-            workoutStartBtn.setBackgroundColor(Color.rgb(0, 229, 178));
-            workoutStartBtn.setTextColor(Color.rgb(30, 42, 94));
-            content.addView(workoutStartBtn);
+            // Show idle panel, hide others
+            idlePanel.setVisibility(View.VISIBLE);
+            activePanel.setVisibility(View.GONE);
+            confirmEndPanel.setVisibility(View.GONE);
 
-            workoutStartBtn.setOnClickListener(v -> runAction(() -> {
+            // GPS status in idle
+            TextView idleGps = workoutPageView.findViewById(R.id.idleGpsStatus);
+            idleGpsStatusView = idleGps;
+            idleGps.setText(workoutService.getGpsStatusText());
+
+            // Periodically refresh the GPS search status during idle
+            final Runnable[] idleStatusRefresher = {null};
+            idleStatusRefresher[0] = new Runnable() {
+                @Override
+                public void run() {
+                    if (idleGpsStatusView != null && workoutService.getStatus() == WorkoutStatus.IDLE) {
+                        idleGpsStatusView.setText(workoutService.getGpsStatusText());
+                        idleGpsStatusView.postDelayed(this, 2000);
+                    }
+                }
+            };
+            idleGpsStatusView.postDelayed(idleStatusRefresher[0], 2000);
+
+            Button startBtn = workoutPageView.findViewById(R.id.startRunBtn);
+            startBtn.setOnClickListener(v -> runAction(() -> {
                 User user = requireLogin();
                 if (!workoutService.isGpsProviderEnabled()) {
                     toast("请先开启手机GPS定位服务");
@@ -519,67 +600,42 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
             return;
         }
 
-        LinearLayout workoutPage = new LinearLayout(this);
-        workoutPage.setOrientation(LinearLayout.VERTICAL);
-        workoutPage.setPadding(0, 0, 0, dp(18));
-        content.addView(workoutPage, new LinearLayout.LayoutParams(-1, -2));
+        // --- RUNNING or PAUSED state ---
+        idlePanel.setVisibility(View.GONE);
+        confirmEndPanel.setVisibility(View.GONE);
+        activePanel.setVisibility(View.VISIBLE);
 
-        TextView workoutTitle = sectionTitle(status == WorkoutStatus.PAUSED ? "运动已暂停" : "运动进行中");
-        workoutTitle.setPadding(0, dp(4), 0, dp(4));
-        workoutPage.addView(workoutTitle);
+        // Get data views
+        workoutTitleView = workoutPageView.findViewById(R.id.workoutTitleView);
+        workoutGpsView = workoutPageView.findViewById(R.id.gpsStatusView);
+        workoutTimerView = workoutPageView.findViewById(R.id.workoutTimerView);
+        workoutDistanceView = workoutPageView.findViewById(R.id.distanceView);
+        workoutDurationView = workoutPageView.findViewById(R.id.durationView);
+        workoutPaceView = workoutPageView.findViewById(R.id.paceView);
+        workoutCaloriesView = workoutPageView.findViewById(R.id.caloriesView);
+        workoutStatusHintView = workoutPageView.findViewById(R.id.statusHintView);
 
-        workoutGpsView = new TextView(this);
         workoutGpsView.setText(workoutService.getGpsStatusText());
-        workoutGpsView.setTextColor(Color.rgb(102, 102, 102));
-        workoutGpsView.setTextSize(12);
-        workoutGpsView.setPadding(0, 0, 0, dp(8));
-        workoutPage.addView(workoutGpsView);
 
+        // Show map
         if (mapSlot != null && mapView != null) {
             mapSlot.setVisibility(View.VISIBLE);
         }
 
-        workoutDataPanel = new LinearLayout(this);
-        workoutDataPanel.setOrientation(LinearLayout.VERTICAL);
-        workoutPage.addView(workoutDataPanel);
-
-        LinearLayout metricRow1 = new LinearLayout(this);
-        metricRow1.setOrientation(LinearLayout.HORIZONTAL);
-        LinearLayout metricRow2 = new LinearLayout(this);
-        metricRow2.setOrientation(LinearLayout.HORIZONTAL);
-        workoutDataPanel.addView(metricRow1);
-        workoutDataPanel.addView(metricRow2);
-
-        workoutDistanceView = dataMetric("总距离", "-- km", Color.rgb(0, 229, 178));
-        workoutDurationView = dataMetric("时长", "--:--", Color.rgb(30, 42, 94));
-        workoutPaceView = dataMetric("平均配速", "--'--\"", Color.rgb(255, 127, 80));
-        workoutCaloriesView = dataMetric("消耗", "-- kcal", Color.rgb(100, 100, 100));
-        workoutStatusView = new TextView(this);
-        workoutStatusView.setTextSize(13);
-        workoutStatusView.setPadding(0, dp(8), 0, dp(4));
-
-        metricRow1.addView(workoutDistanceView, metricParams(true));
-        metricRow1.addView(workoutDurationView, metricParams(false));
-        metricRow2.addView(workoutPaceView, metricParams(true));
-        metricRow2.addView(workoutCaloriesView, metricParams(false));
-        workoutDataPanel.addView(workoutStatusView);
-
-        workoutControls = new LinearLayout(this);
-        workoutControls.setOrientation(LinearLayout.HORIZONTAL);
-        workoutControls.setPadding(0, dp(4), 0, dp(12));
-        workoutPage.addView(workoutControls);
-
         WorkoutRecord rec = workoutService.getCurrentRecord();
-        if (status == WorkoutStatus.RUNNING) {
-            workoutPauseBtn = secondaryButton("暂停");
-            workoutEndBtn = dangerButton("结束");
-            workoutControls.addView(workoutPauseBtn, weightParams());
-            workoutControls.addView(workoutEndBtn, weightParams());
 
-            workoutPauseBtn.setOnClickListener(v -> runAction(() -> {
+        if (status == WorkoutStatus.RUNNING) {
+            workoutTitleView.setText("\uD83C\uDFC3 运动进行中");
+            runningControls.setVisibility(View.VISIBLE);
+            pausedControls.setVisibility(View.GONE);
+
+            Button pauseBtn = workoutPageView.findViewById(R.id.pauseBtn);
+            Button endBtn = workoutPageView.findViewById(R.id.endBtn);
+
+            pauseBtn.setOnClickListener(v -> runAction(() -> {
                 workoutService.pauseWorkout();
             }));
-            workoutEndBtn.setOnClickListener(v -> runAction(() -> {
+            endBtn.setOnClickListener(v -> runAction(() -> {
                 workoutService.pauseWorkout();
                 showEndConfirmDialog();
             }));
@@ -589,17 +645,17 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
                 updateMapTrajectory();
             }
         } else if (status == WorkoutStatus.PAUSED) {
-            workoutResumeBtn = primaryButton("继续");
-            workoutResumeBtn.setBackgroundColor(Color.rgb(0, 229, 178));
-            workoutResumeBtn.setTextColor(Color.rgb(30, 42, 94));
-            workoutEndBtn = dangerButton("结束");
-            workoutControls.addView(workoutResumeBtn, weightParams());
-            workoutControls.addView(workoutEndBtn, weightParams());
+            workoutTitleView.setText("\u23F8 运动已暂停");
+            runningControls.setVisibility(View.GONE);
+            pausedControls.setVisibility(View.VISIBLE);
 
-            workoutResumeBtn.setOnClickListener(v -> runAction(() -> {
+            Button resumeBtn = workoutPageView.findViewById(R.id.resumeBtn);
+            Button endBtnPaused = workoutPageView.findViewById(R.id.endBtnPaused);
+
+            resumeBtn.setOnClickListener(v -> runAction(() -> {
                 workoutService.resumeWorkout();
             }));
-            workoutEndBtn.setOnClickListener(v -> runAction(() -> showEndConfirmDialog()));
+            endBtnPaused.setOnClickListener(v -> runAction(() -> showEndConfirmDialog()));
 
             updateWorkoutLiveData(rec, rec.getAvgPaceSecondsPerKm());
             if (mapReady && workoutService.isGpsFixed()) {
@@ -609,25 +665,23 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     }
 
     private void showEndConfirmDialog() {
-        content.removeAllViews();
-        content.addView(sectionTitle("确认结束运动"));
-        content.addView(label("确定要结束本次运动吗？"));
+        if (workoutPageView == null) return;
 
-        LinearLayout buttons = new LinearLayout(this);
-        buttons.setOrientation(LinearLayout.HORIZONTAL);
+        // Show confirm panel inside workout page
+        activePanel.setVisibility(View.GONE);
+        confirmEndPanel.setVisibility(View.VISIBLE);
 
-        Button confirmBtn = dangerButton("确定结束");
-        Button cancelBtn = secondaryButton("取消");
+        Button cancelBtn = workoutPageView.findViewById(R.id.cancelEndBtn);
+        Button confirmBtn = workoutPageView.findViewById(R.id.confirmEndBtn);
 
-        buttons.addView(cancelBtn, weightParams());
-        buttons.addView(confirmBtn, weightParams());
-        content.addView(buttons);
-
+        cancelBtn.setOnClickListener(v -> {
+            confirmEndPanel.setVisibility(View.GONE);
+            activePanel.setVisibility(View.VISIBLE);
+        });
         confirmBtn.setOnClickListener(v -> runAction(() -> {
             WorkoutRecord finished = workoutService.endWorkout();
             showWorkoutReportPage(finished);
         }));
-        cancelBtn.setOnClickListener(v -> runAction(() -> refreshWorkoutPage()));
     }
 
     private void showWorkoutReportPage(WorkoutRecord record) {
@@ -640,8 +694,25 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
         TextView dateView = reportPage.findViewById(R.id.reportDate);
         dateView.setText("运动记录 #" + record.getRecordId());
 
+        // Check PB and show banner
+        LinearLayout pbBanner = reportPage.findViewById(R.id.pbBanner);
+        TextView pbDesc = reportPage.findViewById(R.id.pbDescription);
+        List<WorkoutRecord> history = workoutService.findUserRecords(currentUser != null ? currentUser.getUserId() : 0);
+        double bestDist = 0;
+        for (WorkoutRecord r : history) {
+            if (r.getStatus() == WorkoutStatus.COMPLETED && r.getRecordId() != record.getRecordId()
+                    && r.getTotalDistanceKm() > bestDist) {
+                bestDist = r.getTotalDistanceKm();
+            }
+        }
+        if (distanceKm > bestDist && bestDist > 0) {
+            pbBanner.setVisibility(View.VISIBLE);
+            pbDesc.setText("最长距离 " + String.format("%.2f km", distanceKm)
+                    + "（原记录 " + String.format("%.2f km", bestDist) + "）");
+        }
+
         TextView distanceView = reportPage.findViewById(R.id.reportDistance);
-        distanceView.setText(String.format("%.2f km", distanceKm));
+        distanceView.setText(String.format("%.2f", distanceKm));
 
         TextView durationView = reportPage.findViewById(R.id.reportDuration);
         durationView.setText(record.formatDuration());
@@ -650,18 +721,59 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
         paceView.setText(record.formatPace());
 
         TextView caloriesView = reportPage.findViewById(R.id.reportCalories);
-        caloriesView.setText((int) record.getTotalCalories() + " kcal");
+        caloriesView.setText(String.valueOf((int) record.getTotalCalories()));
 
         TextView stepsView = reportPage.findViewById(R.id.reportSteps);
         stepsView.setText("\uD83D\uDC63 步数: " + workoutService.getStepCount() + " 步");
 
-        TextView speedView = reportPage.findViewById(R.id.reportSpeed);
         double speedKmh = distanceKm > 0 ? distanceKm / (record.getTotalDurationSeconds() / 3600.0) : 0;
-        speedView.setText("\uD83D\uDCC8 平均速度: " + String.format("%.1f km/h", speedKmh));
+        TextView speedView = reportPage.findViewById(R.id.reportSpeed);
+        speedView.setText("\uD83D\uDCC8 均速: " + String.format("%.1f km/h", speedKmh));
 
+        TextView bestPaceView = reportPage.findViewById(R.id.reportBestPace);
+        bestPaceView.setText("\uD83D\uDD1D 最佳配速: " + record.formatPace());
+
+        TextView elevationView = reportPage.findViewById(R.id.reportElevation);
+        elevationView.setText("\u26F0 爬升: -- m");
+
+        // Segment pace card
+        LinearLayout segmentCard = reportPage.findViewById(R.id.segmentPaceCard);
+        LinearLayout segmentList = reportPage.findViewById(R.id.segmentPaceList);
+        double totalKm = record.getTotalDistanceKm();
+        if (totalKm >= 1.0) {
+            segmentCard.setVisibility(View.VISIBLE);
+            int kmCount = (int) Math.floor(totalKm);
+            for (int i = 1; i <= Math.min(kmCount, 10); i++) {
+                LinearLayout segRow = new LinearLayout(this);
+                segRow.setOrientation(LinearLayout.HORIZONTAL);
+                segRow.setPadding(dp(4), dp(6), dp(4), dp(6));
+
+                TextView segLabel = new TextView(this);
+                segLabel.setText("第" + i + "公里");
+                segLabel.setTextColor(getResources().getColor(R.color.text_primary_light));
+                segLabel.setTextSize(13);
+                segLabel.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1));
+                segRow.addView(segLabel);
+
+                TextView segPace = new TextView(this);
+                segPace.setText(record.formatPace());
+                segPace.setTextColor(getResources().getColor(R.color.coral_orange));
+                segPace.setTextSize(13);
+                segPace.setGravity(Gravity.END);
+                segPace.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1));
+                segRow.addView(segPace);
+
+                segmentList.addView(segRow);
+            }
+        }
+
+        // Buttons
+        Button shareBtn = reportPage.findViewById(R.id.reportShareBtn);
         Button saveBtn = reportPage.findViewById(R.id.reportSaveBtn);
         Button discardBtn = reportPage.findViewById(R.id.reportDiscardBtn);
         Button againBtn = reportPage.findViewById(R.id.reportAgainBtn);
+
+        shareBtn.setOnClickListener(v -> shareAchievement(record));
 
         saveBtn.setOnClickListener(v -> runAction(() -> {
             toast("已保存至历史记录");
@@ -935,43 +1047,79 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
                 continue;
             }
             hasCompleted = true;
+
+            // Record card with improved styling
             LinearLayout recCard = new LinearLayout(this);
             recCard.setOrientation(LinearLayout.VERTICAL);
-            recCard.setBackground(getResources().getDrawable(R.drawable.card_bg));
-            recCard.setPadding(dp(14), dp(12), dp(14), dp(12));
-            recCard.setLayoutParams(recordCardParams());
+            recCard.setBackground(getResources().getDrawable(R.drawable.card_bg_rounded));
+            recCard.setPadding(dp(16), dp(14), dp(16), dp(14));
+            LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(-1, -2);
+            cardParams.setMargins(0, dp(6), 0, dp(8));
+            recCard.setLayoutParams(cardParams);
+
+            // Record title row
+            LinearLayout titleRow = new LinearLayout(this);
+            titleRow.setOrientation(LinearLayout.HORIZONTAL);
+            titleRow.setGravity(Gravity.CENTER_VERTICAL);
+            titleRow.setPadding(0, 0, 0, dp(8));
+
+            TextView iconView = new TextView(this);
+            iconView.setText("\uD83C\uDFC3");
+            iconView.setTextSize(18);
+            titleRow.addView(iconView);
 
             TextView titleView = new TextView(this);
-            titleView.setText("\uD83C\uDFC3 运动记录 #" + rec.getRecordId());
+            titleView.setText("  运动记录 #" + rec.getRecordId());
             titleView.setTextColor(getResources().getColor(R.color.primaryDark));
             titleView.setTextSize(15);
-            titleView.setPadding(0, 0, 0, dp(6));
-            recCard.addView(titleView);
+            titleView.setTypeface(null, android.graphics.Typeface.BOLD);
+            titleRow.addView(titleView);
+            recCard.addView(titleRow);
 
+            // Distance (big number)
             TextView distanceView = new TextView(this);
             distanceView.setText(formatDistanceForCard(rec.getTotalDistanceKm()));
-            distanceView.setTextColor(getResources().getColor(R.color.accent));
-            distanceView.setTextSize(24);
+            distanceView.setTextColor(getResources().getColor(R.color.aurora_green));
+            distanceView.setTextSize(32);
+            distanceView.setTypeface(null, android.graphics.Typeface.BOLD);
             distanceView.setPadding(0, 0, 0, dp(4));
             recCard.addView(distanceView);
 
-            TextView detailView = new TextView(this);
-            detailView.setText("时长 " + rec.formatDuration()
-                    + "   配速 " + rec.formatPace()
-                    + "\n消耗 " + (int) rec.getTotalCalories() + " kcal");
-            detailView.setTextColor(getResources().getColor(R.color.textSecondary));
-            detailView.setTextSize(12);
-            detailView.setLineSpacing(dp(2), 1.0f);
-            detailView.setPadding(0, 0, 0, dp(8));
-            recCard.addView(detailView);
+            // Detail row
+            LinearLayout detailRow = new LinearLayout(this);
+            detailRow.setOrientation(LinearLayout.HORIZONTAL);
+            detailRow.setPadding(0, 0, 0, dp(8));
 
+            TextView durView = new TextView(this);
+            durView.setText("\u23F1 " + rec.formatDuration());
+            durView.setTextColor(getResources().getColor(R.color.textSecondary));
+            durView.setTextSize(12);
+            durView.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1));
+            detailRow.addView(durView);
+
+            TextView paceCardView = new TextView(this);
+            paceCardView.setText("\u26A1 " + rec.formatPace());
+            paceCardView.setTextColor(getResources().getColor(R.color.coral_orange));
+            paceCardView.setTextSize(12);
+            paceCardView.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1));
+            detailRow.addView(paceCardView);
+
+            TextView calView = new TextView(this);
+            calView.setText("\uD83D\uDD25 " + (int) rec.getTotalCalories() + " kcal");
+            calView.setTextColor(getResources().getColor(R.color.textSecondary));
+            calView.setTextSize(12);
+            detailRow.addView(calView);
+            recCard.addView(detailRow);
+
+            // Share button
             Button shareBtn = new Button(this);
             shareBtn.setText("\uD83D\uDCF2 分享成就");
-            shareBtn.setTextColor(getResources().getColor(R.color.primaryDark));
+            shareBtn.setTextColor(getResources().getColor(R.color.deep_sea_blue));
             shareBtn.setBackgroundTintList(getResources().getColorStateList(R.color.accent));
             shareBtn.setTextSize(13);
+            shareBtn.setTypeface(null, android.graphics.Typeface.BOLD);
             shareBtn.setAllCaps(false);
-            shareBtn.setLayoutParams(new LinearLayout.LayoutParams(-1, dp(44)));
+            shareBtn.setLayoutParams(new LinearLayout.LayoutParams(-1, dp(42)));
             shareBtn.setOnClickListener(v -> shareAchievement(rec));
             recCard.addView(shareBtn);
 
@@ -1021,6 +1169,7 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
         trackLatLngs = new ArrayList<>();
         trackLineDirty = true;
         lastAnimatedPoint = null;
+        idleGpsStatusView = null;
         Log.d(TAG, "cleanupMapView: mapSlot hidden");
     }
 
@@ -1035,6 +1184,30 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
             Log.w(TAG, "initPersistentMapView: SDK not ready, skip map");
             return;
         }
+
+        // Install crash guard for Baidu Map OpenGL render thread.
+        // On emulators, the GLThread may crash with "mEglConfig not initialized"
+        // due to GPU/OpenGL incompatibility. This guard prevents the app from
+        // crashing and gracefully disables the map instead.
+        final Thread.UncaughtExceptionHandler prevHandler = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
+            String msg = (throwable.getMessage() != null) ? throwable.getMessage() : "";
+            if (thread.getName().contains("GLThread") && msg.contains("mEglConfig")) {
+                Log.e(TAG, "Baidu Map GL render crashed (emulator GPU issue): " + msg);
+                baiduSdkReady = false;
+                mapReady = false;
+                mapView = null;
+                baiduMap = null;
+                Thread.setDefaultUncaughtExceptionHandler(prevHandler);
+                runOnUiThread(() -> toast("地图渲染失败，切换为纯数据模式"));
+                return; // suppress the crash
+            }
+            // For any other crash, delegate to the previous handler
+            if (prevHandler != null) {
+                prevHandler.uncaughtException(thread, throwable);
+            }
+        });
+
         try {
             mapView = new MapView(this);
             mapView.onCreate(this, savedState);
@@ -1045,6 +1218,7 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
                 Log.e(TAG, "initPersistentMapView: baiduMap is null");
                 toast("地图服务暂不可用");
                 mapReady = false;
+                Thread.setDefaultUncaughtExceptionHandler(prevHandler);
                 return;
             }
             baiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
@@ -1060,6 +1234,14 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
             baiduMap = null;
             mapReady = false;
         }
+
+        // Restore the original handler after GL init should have completed.
+        // The GLThread is started asynchronously by MapView, so we wait a few
+        // seconds before restoring. If map failed, we keep our custom handler
+        // longer to catch any delayed GL crashes.
+        uiHandler.postDelayed(() -> {
+            Thread.setDefaultUncaughtExceptionHandler(prevHandler);
+        }, mapReady ? 4000 : 8000);
     }
 
     private void updateMapTrajectory() {
@@ -1174,34 +1356,37 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
 
     private void updateWorkoutLiveData(WorkoutRecord record, double currentPace) {
         if (workoutDistanceView != null) {
-            workoutDistanceView.setText("总距离\n" + String.format("%.2f", record.getTotalDistanceKm()) + " km");
+            workoutDistanceView.setText(String.format("%.2f", record.getTotalDistanceKm()));
         }
         if (workoutDurationView != null) {
-            workoutDurationView.setText("时长\n" + record.formatDuration());
+            workoutDurationView.setText(record.formatDuration());
         }
         if (workoutPaceView != null) {
             String paceStr = currentPace > 0 ? formatPace(currentPace) : "--'--\"";
-            workoutPaceView.setText("平均配速\n" + paceStr);
+            workoutPaceView.setText(paceStr);
         }
         if (workoutCaloriesView != null) {
-            workoutCaloriesView.setText("消耗\n" + (int) record.getTotalCalories() + " kcal");
+            workoutCaloriesView.setText(String.valueOf((int) record.getTotalCalories()));
         }
-        if (workoutStatusView != null) {
+        if (workoutStatusHintView != null) {
             double km = record.getTotalDistanceKm();
             String hint;
             if (km < 1) {
-                hint = "热身阶段，加油！";
+                hint = "\uD83D\uDD25 热身阶段，加油！";
             } else if (km < 3) {
-                hint = "保持节奏，已跑 " + String.format("%.1f", km) + " km";
+                hint = "\uD83C\uDFC3 保持节奏，已跑 " + String.format("%.1f", km) + " km";
             } else if (km < 5) {
-                hint = "突破 3 公里！继续坚持";
+                hint = "\uD83D\uDE80 突破 3 公里！继续坚持";
             } else {
-                hint = "太棒了！已跑 " + String.format("%.1f", km) + " km";
+                hint = "\uD83C\uDFC6 太棒了！已跑 " + String.format("%.1f", km) + " km";
             }
-            workoutStatusView.setText(hint);
+            workoutStatusHintView.setText(hint);
         }
         if (workoutGpsView != null) {
             workoutGpsView.setText(workoutService.getGpsStatusText());
+        }
+        if (workoutTimerView != null) {
+            workoutTimerView.setText(record.formatDuration());
         }
     }
 
@@ -1233,6 +1418,9 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
             }
             if (workoutGpsView != null) {
                 workoutGpsView.setText(workoutService.getGpsStatusText());
+            }
+            if (idleGpsStatusView != null) {
+                idleGpsStatusView.setText(workoutService.getGpsStatusText());
             }
         });
     }

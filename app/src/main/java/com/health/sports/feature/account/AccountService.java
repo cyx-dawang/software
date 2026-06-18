@@ -59,6 +59,22 @@ public class AccountService {
         return user;
     }
 
+    public User loginByCode(String mobile, String code) {
+        validateMobile(mobile);
+        User user = store.findUserByMobile(mobile);
+        if (user == null) {
+            throw new ApiException(404, "用户不存在，请先注册");
+        }
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new ApiException(403, "用户状态不可登录");
+        }
+        String savedCode = store.findVerificationCode(mobile);
+        if (savedCode == null || !savedCode.equals(code)) {
+            throw new ApiException(400, "验证码错误");
+        }
+        return user;
+    }
+
     public User getUser(long userId) {
         User user = store.findUserById(userId);
         if (user == null) {

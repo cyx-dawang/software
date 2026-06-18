@@ -70,13 +70,20 @@ public class WorkoutService {
     private double userStepLengthM;
     private Runnable demoLocationRunnable;
     private int demoTick;
+    private Runnable tickerRunnable;
     private static final double MIN_MOVE_SPEED_MS = 0.8;
     private static final double MAX_ACCEPTABLE_ACCURACY = 30.0;
+    private static final double MAX_ACCEPTABLE_ACCURACY_FALLBACK = 65.0;
     private static final double MAX_JUMP_METERS = 300.0;
     private static final int MAX_CONSECUTIVE_REJECTIONS = 5;
     private static final double MIN_SPEED_THRESHOLD = 0.3;
     private static final double MAX_SPEED_THRESHOLD = 7.0;
     private static final double DEFAULT_STEP_LENGTH_M = 0.75;
+    private static final long GPS_FIRST_FIX_TIMEOUT_MS = 45000;
+    private long gpsSearchStartTime;
+    private boolean gpsTimeoutFallback;
+    private int consecutiveLowAccuracyCount;
+    private static final int MAX_LOW_ACCURACY_BURST = 3;
 
     public interface WorkoutUpdateListener {
         void onTick(WorkoutRecord record, double currentPace);
@@ -167,8 +174,11 @@ public class WorkoutService {
         lastAcceptedLon = currentLon;
         stationaryCount = 0;
         consecutiveRejections = 0;
+        consecutiveLowAccuracyCount = 0;
         gpsUpdateCount = 0;
         demoTick = 0;
+        gpsSearchStartTime = System.currentTimeMillis();
+        gpsTimeoutFallback = false;
         stepCount = 0;
         stepCountStart = 0;
 
@@ -189,6 +199,7 @@ public class WorkoutService {
         startBaiduLocation();
         startStepCounter();
         startWatchdog();
+        startTicker();
 
         if (listener != null) {
             listener.onStateChanged(WorkoutStatus.RUNNING);
@@ -205,6 +216,7 @@ public class WorkoutService {
         stopBaiduLocation();
         stopStepCounter();
         stopWatchdog();
+        stopTicker();
 
         if (listener != null) {
             listener.onStateChanged(WorkoutStatus.PAUSED);
@@ -222,10 +234,16 @@ public class WorkoutService {
         currentRecord.setStatus(WorkoutStatus.RUNNING);
         lastPointTime = System.currentTimeMillis();
         lastLocationUpdateTime = System.currentTimeMillis();
+        consecutiveLowAccuracyCount = 0;
+        if (!initialLocationReceived) {
+            gpsSearchStartTime = System.currentTimeMillis();
+            gpsTimeoutFallback = false;
+        }
 
         startBaiduLocation();
         startStepCounter();
         startWatchdog();
+        startTicker();
 
         if (listener != null) {
             listener.onStateChanged(WorkoutStatus.RUNNING);
@@ -245,6 +263,7 @@ public class WorkoutService {
         stopBaiduLocation();
         stopStepCounter();
         stopWatchdog();
+        stopTicker();
 
         if (listener != null) {
             listener.onStateChanged(WorkoutStatus.COMPLETED);
@@ -264,6 +283,7 @@ public class WorkoutService {
         stopBaiduLocation();
         stopStepCounter();
         stopWatchdog();
+        stopTicker();
 
         if (listener != null) {
             listener.onStateChanged(WorkoutStatus.DISCARDED);
@@ -322,13 +342,21 @@ public class WorkoutService {
             return sb.toString();
         }
         if (!initialLocationReceived && !preloadedReceived) {
-            return "正在搜索卫星...";
+            long searchTime = System.currentTimeMillis() - gpsSearchStartTime;
+            if (gpsTimeoutFallback || searchTime > GPS_FIRST_FIX_TIMEOUT_MS) {
+                return "GPS搜索超时，正在尝试网络定位...";
+            }
+            return "正在搜索卫星...(" + (searchTime / 1000) + "s)";
         }
         String source;
         if (lastLocType == BDLocation.TypeGpsLocation) {
             source = "GPS卫星";
         } else if (lastLocType == BDLocation.TypeNetWorkLocation) {
             source = "网络定位";
+        } else if (lastLocType == BDLocation.TypeCacheLocation) {
+            source = "缓存定位";
+        } else if (lastLocType == BDLocation.TypeOffLineLocation) {
+            source = "离线定位";
         } else {
             source = "混合定位";
         }
@@ -363,6 +391,7 @@ public class WorkoutService {
         stopBaiduLocation();
         stopStepCounter();
         stopWatchdog();
+        stopTicker();
     }
 
     public void startPreloading() {
@@ -406,50 +435,68 @@ public class WorkoutService {
                 return;
             }
             int locType = location.getLocType();
+            double lat = location.getLatitude();
+            double lng = location.getLongitude();
+            float radius = location.getRadius();
             Log.d(TAG, "onReceiveLocation: locType=" + locType
-                    + " lat=" + location.getLatitude()
-                    + " lng=" + location.getLongitude()
-                    + " radius=" + location.getRadius());
+                    + " lat=" + lat + " lng=" + lng
+                    + " radius=" + radius);
             handler.post(() -> {
                 if (currentRecord == null) {
-                    preloadedLat = location.getLatitude();
-                    preloadedLon = location.getLongitude();
+                    preloadedLat = lat;
+                    preloadedLon = lng;
                     boolean wasReceived = preloadedReceived;
                     preloadedReceived = true;
                     lastLocType = locType;
                     gpsUpdateCount++;
                     Log.d(TAG, "Preloaded location: lat=" + preloadedLat + " lng=" + preloadedLon);
                     if (!wasReceived && listener != null) {
-                        listener.onGpsFixAcquired(preloadedLat, preloadedLon, location.getRadius());
+                        listener.onGpsFixAcquired(preloadedLat, preloadedLon, radius);
                     }
                     return;
                 }
                 if (currentRecord.getStatus() != WorkoutStatus.RUNNING) {
-                    Log.d(TAG, "processLocation skipped: currentRecord=" + currentRecord
-                            + " status=" + (currentRecord != null ? currentRecord.getStatus() : "null"));
+                    Log.d(TAG, "processLocation skipped: status=" + currentRecord.getStatus());
                     return;
                 }
                 if (locType == BDLocation.TypeServerError
                         || locType == BDLocation.TypeNetWorkException
                         || locType == BDLocation.TypeCriteriaException) {
-                    Log.d(TAG, "Location error: locType=" + locType);
+                    Log.w(TAG, "Location error: locType=" + locType
+                            + ", checking GPS timeout fallback (searched "
+                            + (System.currentTimeMillis() - gpsSearchStartTime) / 1000 + "s)");
+                    if (!initialLocationReceived && !gpsTimeoutFallback
+                            && System.currentTimeMillis() - gpsSearchStartTime > GPS_FIRST_FIX_TIMEOUT_MS) {
+                        gpsTimeoutFallback = true;
+                        Log.w(TAG, "GPS first fix timed out after "
+                                + (GPS_FIRST_FIX_TIMEOUT_MS / 1000)
+                                + "s, will try to restart LocationClient to refresh");
+                        stopBaiduLocation();
+                        handler.postDelayed(() -> {
+                            startBaiduLocation();
+                            lastLocationUpdateTime = System.currentTimeMillis();
+                        }, 1000);
+                    }
                     return;
                 }
                 lastLocType = locType;
-                processRealLocation(location);
+                processLocation(location);
             });
         }
     }
 
-    private void processRealLocation(BDLocation location) {
+    private void processLocation(BDLocation location) {
         long now = System.currentTimeMillis();
         float speed = location.hasSpeed() ? (float) location.getSpeed() : 0;
-        onLocationSample(location.getLatitude(), location.getLongitude(),
-                location.getRadius(), speed, now);
+        int locType = location.getLocType();
+        double lat = location.getLatitude();
+        double lng = location.getLongitude();
+        float accuracy = location.getRadius();
+        onLocationSample(lat, lng, accuracy, speed, now, locType);
     }
 
     private void onLocationSample(double rawLat, double rawLng, float accuracy,
-                                  float speed, long timestamp) {
+                                  float speed, long timestamp, int locType) {
         if (currentRecord == null || currentRecord.getStatus() != WorkoutStatus.RUNNING) {
             return;
         }
@@ -469,11 +516,18 @@ public class WorkoutService {
             lastPointTime = timestamp;
             stationaryCount = 0;
             consecutiveRejections = 0;
+            consecutiveLowAccuracyCount = 0;
             accumulatedDistance = 0;
             initialLocationReceived = true;
             restartWatchdog();
-            Log.i(TAG, "First location: lat=" + rawLat + " lng=" + rawLng
-                    + " acc=" + accuracy + "m");
+            gpsTimeoutFallback = false;
+            if (locType == BDLocation.TypeGpsLocation) {
+                Log.i(TAG, "First GPS fix: lat=" + rawLat + " lng=" + rawLng
+                        + " acc=" + accuracy + "m");
+            } else {
+                Log.i(TAG, "First location (locType=" + locType + "): lat=" + rawLat
+                        + " lng=" + rawLng + " acc=" + accuracy + "m");
+            }
             if (listener != null) {
                 listener.onGpsFixAcquired(rawLat, rawLng, accuracy);
             }
@@ -529,7 +583,31 @@ public class WorkoutService {
         currentLon = smoothedLon;
         currentAccuracy = accuracy;
 
-        boolean lowAccuracy = accuracy > MAX_ACCEPTABLE_ACCURACY;
+        boolean isGpsLocation = (locType == BDLocation.TypeGpsLocation);
+        boolean isNetworkLocation = (locType == BDLocation.TypeNetWorkLocation
+                || locType == BDLocation.TypeCacheLocation
+                || locType == BDLocation.TypeOffLineLocation);
+
+        double effectiveMaxAccuracy;
+        if (isGpsLocation) {
+            effectiveMaxAccuracy = MAX_ACCEPTABLE_ACCURACY;
+        } else if (isNetworkLocation && gpsSearchStartTime > 0
+                && System.currentTimeMillis() - gpsSearchStartTime > GPS_FIRST_FIX_TIMEOUT_MS) {
+            effectiveMaxAccuracy = MAX_ACCEPTABLE_ACCURACY_FALLBACK;
+        } else {
+            effectiveMaxAccuracy = MAX_ACCEPTABLE_ACCURACY;
+        }
+
+        boolean lowAccuracy = accuracy > effectiveMaxAccuracy;
+
+        if (lowAccuracy && locType != BDLocation.TypeGpsLocation) {
+            consecutiveLowAccuracyCount++;
+            if (consecutiveLowAccuracyCount > MAX_LOW_ACCURACY_BURST) {
+                consecutiveLowAccuracyCount = MAX_LOW_ACCURACY_BURST;
+            }
+        } else {
+            consecutiveLowAccuracyCount = Math.max(0, consecutiveLowAccuracyCount - 1);
+        }
 
         boolean isCurrentlyStationary = false;
         if (speed < MIN_MOVE_SPEED_MS && rawDist < 5.0) {
@@ -541,11 +619,21 @@ public class WorkoutService {
             stationaryCount = Math.max(0, stationaryCount - 1);
         }
 
-        if (!isDeadlockRecovery && !isCurrentlyStationary && !lowAccuracy && rawDist >= 2.0) {
+        boolean shouldSaveTrackPoint;
+        if (isGpsLocation) {
+            shouldSaveTrackPoint = !isDeadlockRecovery && !isCurrentlyStationary
+                    && !lowAccuracy && rawDist >= 2.0;
+        } else {
+            shouldSaveTrackPoint = !isDeadlockRecovery && !isCurrentlyStationary
+                    && !lowAccuracy && rawDist >= 2.0;
+        }
+
+        if (shouldSaveTrackPoint) {
             TrackPoint point = new TrackPoint(store.nextTrackPointId(),
                     currentRecord.getRecordId(), currentLat, currentLon, stepCount,
                     timestamp, accuracy);
             store.saveTrackPoint(point);
+            consecutiveLowAccuracyCount = 0;
 
             double smoothedDist = DistanceCalculator.haversineDistance(
                     lastAcceptedLat, lastAcceptedLon, smoothedLat, smoothedLon);
@@ -585,7 +673,8 @@ public class WorkoutService {
 
         lastPointTime = timestamp;
 
-        Log.d(TAG, "Loc: lat=" + String.format("%.6f", currentLat)
+        String locSource = isGpsLocation ? "GPS" : (isNetworkLocation ? "NET" : "MIX");
+        Log.d(TAG, "Loc[" + locSource + "]: lat=" + String.format("%.6f", currentLat)
                 + " lng=" + String.format("%.6f", currentLon)
                 + " rawDist=" + String.format("%.1f", rawDist) + "m"
                 + " acc=" + accuracy + "m"
@@ -691,6 +780,38 @@ public class WorkoutService {
         }
     }
 
+    private void startTicker() {
+        stopTicker();
+        tickerRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (currentRecord != null && currentRecord.getStatus() == WorkoutStatus.RUNNING) {
+                    long now = System.currentTimeMillis();
+                    int activeDuration = (int) ((now - currentRecord.getStartTime() - pausedDurationMs) / 1000);
+                    if (activeDuration <= 0) {
+                        activeDuration = 1;
+                    }
+                    currentRecord.setTotalDurationSeconds(activeDuration);
+                    double pace = DistanceCalculator.calculatePaceSecondsPerKm(
+                            accumulatedDistance, activeDuration);
+                    currentRecord.setAvgPaceSecondsPerKm(pace);
+                    if (listener != null) {
+                        listener.onTick(currentRecord, pace);
+                    }
+                }
+                handler.postDelayed(this, 1000);
+            }
+        };
+        handler.post(tickerRunnable);
+    }
+
+    private void stopTicker() {
+        if (tickerRunnable != null) {
+            handler.removeCallbacks(tickerRunnable);
+            tickerRunnable = null;
+        }
+    }
+
     private void startDemoLocation() {
         if (demoLocationRunnable != null) {
             return;
@@ -706,7 +827,8 @@ public class WorkoutService {
                 demoTick++;
                 double lat = FALLBACK_LAT + demoTick * 0.00003;
                 double lon = FALLBACK_LON + Math.sin(demoTick / 5.0) * 0.00002;
-                onLocationSample(lat, lon, 8.0f, 2.4f, System.currentTimeMillis());
+                onLocationSample(lat, lon, 8.0f, 2.4f, System.currentTimeMillis(),
+                        BDLocation.TypeGpsLocation);
                 handler.postDelayed(this, 2000);
             }
         };
@@ -776,30 +898,44 @@ public class WorkoutService {
     };
 
     private Runnable watchdogRunnable;
+    private int watchdogRestartCount;
+    private static final int WATCHDOG_MAX_RESTARTS = 3;
+    private static final int WATCHDOG_IDLE_TIMEOUT_MS = 30000;
 
     private void startWatchdog() {
         if (!baiduLocationEnabled) {
             return;
         }
         stopWatchdog();
+        watchdogRestartCount = 0;
         watchdogRunnable = new Runnable() {
             @Override
             public void run() {
                 long elapsed = System.currentTimeMillis() - lastLocationUpdateTime;
-                if (elapsed > 15000 && currentRecord != null
+                if (elapsed > WATCHDOG_IDLE_TIMEOUT_MS && currentRecord != null
                         && currentRecord.getStatus() == WorkoutStatus.RUNNING) {
-                    Log.w(TAG, "Watchdog: no location update for " + (elapsed / 1000)
-                            + "s, restarting Baidu LocationClient");
-                    stopBaiduLocation();
-                    handler.postDelayed(() -> {
-                        startBaiduLocation();
-                        lastLocationUpdateTime = System.currentTimeMillis();
-                    }, 500);
+                    if (watchdogRestartCount < WATCHDOG_MAX_RESTARTS) {
+                        watchdogRestartCount++;
+                        Log.w(TAG, "Watchdog: no location update for " + (elapsed / 1000)
+                                + "s, restarting Baidu LocationClient (attempt "
+                                + watchdogRestartCount + "/" + WATCHDOG_MAX_RESTARTS + ")");
+                        stopBaiduLocation();
+                        handler.postDelayed(() -> {
+                            startBaiduLocation();
+                            lastLocationUpdateTime = System.currentTimeMillis();
+                        }, 2000);
+                    } else {
+                        Log.w(TAG, "Watchdog: max restarts reached, GPS acquisition may be blocked."
+                                + " Accepting any available location.");
+                        if (!initialLocationReceived) {
+                            gpsTimeoutFallback = true;
+                        }
+                    }
                 }
-                handler.postDelayed(this, 5000);
+                handler.postDelayed(this, 10000);
             }
         };
-        handler.postDelayed(watchdogRunnable, 10000);
+        handler.postDelayed(watchdogRunnable, WATCHDOG_IDLE_TIMEOUT_MS);
     }
 
     private void stopWatchdog() {
@@ -812,7 +948,8 @@ public class WorkoutService {
     private void restartWatchdog() {
         if (watchdogRunnable != null) {
             handler.removeCallbacks(watchdogRunnable);
-            handler.postDelayed(watchdogRunnable, 10000);
+            watchdogRestartCount = 0;
+            handler.postDelayed(watchdogRunnable, WATCHDOG_IDLE_TIMEOUT_MS);
         }
     }
 }

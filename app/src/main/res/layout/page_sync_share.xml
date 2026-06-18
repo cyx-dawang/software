@@ -1,83 +1,160 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/syncRoot"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="\uD83D\uDD17 同步与成就分享"
-        android:textColor="@color/text_primary_light"
-        android:textSize="@dimen/text_headline"
-        android:textStyle="bold"
-        android:paddingBottom="20dp" />
+    android:fillViewport="true">
 
     <LinearLayout
+        android:id="@+id/syncRoot"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="@drawable/card_bg_rounded"
-        android:elevation="8dp"
-        android:padding="@dimen/padding_xlarge"
-        android:layout_marginBottom="16dp">
+        android:orientation="vertical">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="\u231A 同步服务"
-            android:textColor="@color/text_primary_light"
-            android:textSize="@dimen/text_subtitle"
-            android:textStyle="bold"
-            android:paddingBottom="12dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="连接您的智能穿戴设备，自动同步健康数据"
-            android:textColor="@color/text_secondary_light"
-            android:textSize="@dimen/text_body"
-            android:paddingBottom="16dp" />
-
-        <Button
-            android:id="@+id/connectWearBtn"
-            style="@style/AccentButton"
-            android:text="\uD83D\uDCF6 连接穿戴设备" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="@drawable/card_bg_rounded"
-        android:elevation="8dp"
-        android:padding="@dimen/padding_xlarge">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="\uD83C\uDFC6 运动成就分享"
-            android:textColor="@color/text_primary_light"
-            android:textSize="@dimen/text_subtitle"
-            android:textStyle="bold"
-            android:paddingBottom="12dp" />
-
+        <!-- Header -->
         <LinearLayout
-            android:id="@+id/recordsList"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
-
-        <TextView
-            android:id="@+id/noRecordsHint"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="\uD83C\uDFC3 暂无运动记录，快去跑步吧！"
-            android:textColor="@color/text_secondary_light"
-            android:textSize="@dimen/text_body"
+            android:orientation="vertical"
             android:gravity="center"
-            android:padding="24dp" />
-    </LinearLayout>
+            android:paddingBottom="20dp">
 
-</LinearLayout>
+            <TextView
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:gravity="center"
+                android:text="\uD83D\uDD17"
+                android:textSize="30sp"
+                android:background="@drawable/card_bg_rounded"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="同步与成就分享"
+                android:textColor="@color/deep_sea_blue"
+                android:textSize="@dimen/text_headline"
+                android:textStyle="bold"
+                android:gravity="center" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="连接穿戴设备，分享运动成就"
+                android:textColor="@color/text_secondary_light"
+                android:textSize="@dimen/text_body"
+                android:gravity="center"
+                android:paddingTop="4dp" />
+        </LinearLayout>
+
+        <!-- Sync Service Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg_rounded"
+            android:elevation="8dp"
+            android:padding="@dimen/padding_xlarge"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingBottom="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="\u231A"
+                    android:textSize="20sp"
+                    android:paddingEnd="8dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="同步服务"
+                    android:textColor="@color/text_primary_light"
+                    android:textSize="@dimen/text_subtitle"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="连接您的智能穿戴设备，自动同步步数、心率、睡眠等健康数据"
+                android:textColor="@color/text_secondary_light"
+                android:textSize="@dimen/text_body"
+                android:paddingBottom="16dp" />
+
+            <Button
+                android:id="@+id/connectWearBtn"
+                style="@style/AccentButton"
+                android:text="\uD83D\uDCF6 连接穿戴设备" />
+        </LinearLayout>
+
+        <!-- Achievement Records Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg_rounded"
+            android:elevation="8dp"
+            android:padding="@dimen/padding_xlarge">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingBottom="4dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="\uD83C\uDFC6"
+                    android:textSize="20sp"
+                    android:paddingEnd="8dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="运动成就分享"
+                    android:textColor="@color/text_primary_light"
+                    android:textSize="@dimen/text_subtitle"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="完成运动后，可将成就海报分享至社交平台"
+                android:textColor="@color/text_hint_light"
+                android:textSize="@dimen/text_caption"
+                android:paddingBottom="12dp" />
+
+            <LinearLayout
+                android:id="@+id/recordsList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:divider="@drawable/divider_horizontal"
+                android:showDividers="middle"
+                android:dividerPadding="8dp" />
+
+            <TextView
+                android:id="@+id/noRecordsHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="\uD83C\uDFC3 暂无运动记录\n快去跑步吧！"
+                android:textColor="@color/text_secondary_light"
+                android:textSize="@dimen/text_body"
+                android:gravity="center"
+                android:padding="24dp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
