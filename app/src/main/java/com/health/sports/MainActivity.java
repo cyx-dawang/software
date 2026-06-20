@@ -24,18 +24,15 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.baidu.mapapi.SDKInitializer;
-import com.baidu.mapapi.map.BaiduMap;
-import com.baidu.location.LocationClient;
-import com.baidu.mapapi.map.BitmapDescriptor;
-import com.baidu.mapapi.map.BitmapDescriptorFactory;
-import com.baidu.mapapi.map.MapStatus;
-import com.baidu.mapapi.map.MapStatusUpdateFactory;
-import com.baidu.mapapi.map.MapView;
-import com.baidu.mapapi.map.MarkerOptions;
-import com.baidu.mapapi.map.OverlayOptions;
-import com.baidu.mapapi.map.PolylineOptions;
-import com.baidu.mapapi.model.LatLng;
+import com.amap.api.maps.AMap;
+import com.amap.api.maps.MapsInitializer;
+import com.amap.api.maps.MapView;
+import com.amap.api.maps.CameraUpdateFactory;
+import com.amap.api.maps.model.BitmapDescriptor;
+import com.amap.api.maps.model.BitmapDescriptorFactory;
+import com.amap.api.maps.model.LatLng;
+import com.amap.api.maps.model.MarkerOptions;
+import com.amap.api.maps.model.PolylineOptions;
 
 import com.health.sports.model.ActivityLevel;
 import com.health.sports.model.ApiException;
@@ -99,10 +96,10 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     private LinearLayout pausedControls;
 
     private MapView mapView;
-    private BaiduMap baiduMap;
+    private AMap aMap;
     private List<LatLng> trackLatLngs;
     private boolean mapReady;
-    private boolean baiduSdkReady;
+    private boolean amapSdkReady;
     private boolean trackLineDirty;
     private LatLng lastAnimatedPoint;
     private Bundle savedState;
@@ -135,7 +132,7 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.savedState = savedInstanceState;
-        initBaiduSdk();
+        initAmapSdk();
         setContentView(R.layout.activity_main);
         requestRuntimePermissions();
 
@@ -146,7 +143,7 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
         accountService = new AccountService(store, new PasswordHasher());
         profileService = new HealthProfileService(store, accountService);
         workoutService = new WorkoutService(store, accountService, profileService,
-                getApplicationContext(), baiduSdkReady);
+                getApplicationContext(), amapSdkReady);
         workoutService.setListener(this);
         trainingPlanService = new TrainingPlanService(store, profileService);
         healthSyncService = new HealthSyncService(store, accountService, workoutService);
@@ -158,42 +155,38 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
         showRegisterPage();
     }
 
-    private void initBaiduSdk() {
+    private void initAmapSdk() {
         try {
-            String ak = getBaiduMapAk();
+            String ak = getAmapKey();
             if (ak == null || ak.isEmpty() || ak.startsWith("${")) {
-                baiduSdkReady = false;
-                Log.w(TAG, "Baidu AK is not configured; map is disabled and workout uses demo location");
+                amapSdkReady = false;
+                Log.w(TAG, "AMap Key is not configured; map is disabled and workout uses demo location");
                 return;
             }
 
-            SDKInitializer.setAgreePrivacy(getApplicationContext(), true);
-            SDKInitializer.initialize(getApplicationContext());
-            LocationClient.setAgreePrivacy(true);
-            baiduSdkReady = true;
+            MapsInitializer.updatePrivacyShow(getApplicationContext(), true, true);
+            MapsInitializer.updatePrivacyAgree(getApplicationContext(), true);
+            amapSdkReady = true;
 
-            Log.i(TAG, "Baidu SDK initialized | AK length=" + (ak != null ? ak.length() : 0)
+            Log.i(TAG, "AMap SDK initialized | Key length=" + (ak != null ? ak.length() : 0)
                     + " | pkg=" + getPackageName());
         } catch (Throwable t) {
-            Log.e(TAG, "Baidu SDK init failed: " + t.getClass().getSimpleName(), t);
-            baiduSdkReady = false;
+            Log.e(TAG, "AMap SDK init failed: " + t.getClass().getSimpleName(), t);
+            amapSdkReady = false;
         }
     }
 
-    private String getBaiduMapAk() {
+    private String getAmapKey() {
         try {
             ApplicationInfo ai = getPackageManager().getApplicationInfo(
                     getPackageName(), PackageManager.GET_META_DATA);
             if (ai.metaData == null) {
                 return "";
             }
-            String ak = ai.metaData.getString("com.baidu.lbsapi.API_KEY");
-            if (ak == null || ak.isEmpty()) {
-                ak = ai.metaData.getString("com.baidu.android.lbs.API_KEY");
-            }
+            String ak = ai.metaData.getString("com.amap.api.v2.apikey");
             return ak == null ? "" : ak.trim();
         } catch (Exception e) {
-            Log.w(TAG, "Unable to read Baidu AK from manifest: " + e.getMessage());
+            Log.w(TAG, "Unable to read AMap Key from manifest: " + e.getMessage());
             return "";
         }
     }
@@ -302,7 +295,7 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
                 mapView.onPause();
                 mapView.onDestroy();
                 mapView = null;
-                baiduMap = null;
+                aMap = null;
                 mapReady = false;
             }
         } catch (Throwable t) {
@@ -545,7 +538,7 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
         content.removeAllViews();
         WorkoutStatus status = workoutService.getStatus();
 
-        Log.d(TAG, "showWorkoutPage status=" + status + " baiduSdkReady=" + baiduSdkReady);
+        Log.d(TAG, "showWorkoutPage status=" + status + " amapSdkReady=" + amapSdkReady);
 
         if (status == WorkoutStatus.COMPLETED) {
             return;
@@ -581,7 +574,19 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
                 @Override
                 public void run() {
                     if (idleGpsStatusView != null && workoutService.getStatus() == WorkoutStatus.IDLE) {
-                        idleGpsStatusView.setText(workoutService.getGpsStatusText());
+                        String statusText = workoutService.getGpsStatusText();
+                        idleGpsStatusView.setText(statusText);
+
+                        // Show guidance tip when GPS search is taking too long
+                        long searchTime = workoutService.getGpsSearchElapsedSeconds();
+                        if (searchTime > 30 && searchTime <= 60 && searchTime % 10 == 0) {
+                            toast("提示：请移步到开阔地带，并确保Wi-Fi已开启");
+                        } else if (searchTime > 60 && searchTime <= 120 && searchTime % 30 == 0) {
+                            toast("GPS信号弱，请移至室外或窗边，并开启Wi-Fi扫描");
+                        } else if (searchTime > 120 && searchTime % 60 == 0) {
+                            toast("GPS持续无信号，将自动切换为网络定位");
+                        }
+
                         idleGpsStatusView.postDelayed(this, 2000);
                     }
                 }
@@ -591,6 +596,17 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
             Button startBtn = workoutPageView.findViewById(R.id.startRunBtn);
             startBtn.setOnClickListener(v -> runAction(() -> {
                 User user = requireLogin();
+                // Check location permission first
+                if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    toast("请授予位置权限后开始运动");
+                    requestPermissions(new String[]{
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION,
+                    }, REQUEST_PERMISSIONS);
+                    return;
+                }
+                // Check if GPS provider is enabled in system settings
                 if (!workoutService.isGpsProviderEnabled()) {
                     toast("请先开启手机GPS定位服务");
                     return;
@@ -1179,73 +1195,40 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
     }
 
     private void initPersistentMapView() {
-        Log.d(TAG, "initPersistentMapView: baiduSdkReady=" + baiduSdkReady);
-        if (!baiduSdkReady) {
+        Log.d(TAG, "initPersistentMapView: amapSdkReady=" + amapSdkReady);
+        if (!amapSdkReady) {
             Log.w(TAG, "initPersistentMapView: SDK not ready, skip map");
             return;
         }
 
-        // Install crash guard for Baidu Map OpenGL render thread.
-        // On emulators, the GLThread may crash with "mEglConfig not initialized"
-        // due to GPU/OpenGL incompatibility. This guard prevents the app from
-        // crashing and gracefully disables the map instead.
-        final Thread.UncaughtExceptionHandler prevHandler = Thread.getDefaultUncaughtExceptionHandler();
-        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
-            String msg = (throwable.getMessage() != null) ? throwable.getMessage() : "";
-            if (thread.getName().contains("GLThread") && msg.contains("mEglConfig")) {
-                Log.e(TAG, "Baidu Map GL render crashed (emulator GPU issue): " + msg);
-                baiduSdkReady = false;
-                mapReady = false;
-                mapView = null;
-                baiduMap = null;
-                Thread.setDefaultUncaughtExceptionHandler(prevHandler);
-                runOnUiThread(() -> toast("地图渲染失败，切换为纯数据模式"));
-                return; // suppress the crash
-            }
-            // For any other crash, delegate to the previous handler
-            if (prevHandler != null) {
-                prevHandler.uncaughtException(thread, throwable);
-            }
-        });
-
         try {
             mapView = new MapView(this);
-            mapView.onCreate(this, savedState);
+            mapView.onCreate(savedState);
             mapSlot.removeAllViews();
             mapSlot.addView(mapView, new LinearLayout.LayoutParams(-1, dp(300)));
-            baiduMap = mapView.getMap();
-            if (baiduMap == null) {
-                Log.e(TAG, "initPersistentMapView: baiduMap is null");
+            aMap = mapView.getMap();
+            if (aMap == null) {
+                Log.e(TAG, "initPersistentMapView: aMap is null");
                 toast("地图服务暂不可用");
                 mapReady = false;
-                Thread.setDefaultUncaughtExceptionHandler(prevHandler);
                 return;
             }
-            baiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
-            baiduMap.setMapStatus(MapStatusUpdateFactory.newMapStatus(
-                    new MapStatus.Builder().zoom(17).build()));
-            baiduMap.setTrafficEnabled(false);
+            aMap.setMapType(AMap.MAP_TYPE_NORMAL);
+            aMap.moveCamera(CameraUpdateFactory.zoomTo(17));
+            aMap.setTrafficEnabled(false);
             mapReady = true;
-            Log.i(TAG, "initPersistentMapView: SUCCESS, waiting for onResume");
+            Log.i(TAG, "initPersistentMapView: SUCCESS");
         } catch (Throwable t) {
             Log.e(TAG, "initPersistentMapView failed: " + t.getClass().getSimpleName(), t);
             toast("地图初始化失败，将以纯数据模式记录");
             mapView = null;
-            baiduMap = null;
+            aMap = null;
             mapReady = false;
         }
-
-        // Restore the original handler after GL init should have completed.
-        // The GLThread is started asynchronously by MapView, so we wait a few
-        // seconds before restoring. If map failed, we keep our custom handler
-        // longer to catch any delayed GL crashes.
-        uiHandler.postDelayed(() -> {
-            Thread.setDefaultUncaughtExceptionHandler(prevHandler);
-        }, mapReady ? 4000 : 8000);
     }
 
     private void updateMapTrajectory() {
-        if (!mapReady || baiduMap == null) {
+        if (!mapReady || aMap == null) {
             return;
         }
 
@@ -1284,7 +1267,7 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
         }
 
         if (trackLineDirty) {
-            baiduMap.clear();
+            aMap.clear();
             trackLineDirty = false;
 
             if (trackLatLngs.size() >= 1) {
@@ -1294,7 +1277,7 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
                         .position(trackLatLngs.get(0))
                         .icon(startIcon)
                         .title("起点");
-                baiduMap.addOverlay(startMarker);
+                aMap.addMarker(startMarker);
             }
 
             if (trackLatLngs.size() >= 2) {
@@ -1302,8 +1285,8 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
                 PolylineOptions polylineOptions = new PolylineOptions()
                         .width(8)
                         .color(Color.rgb(0, 229, 178))
-                        .points(smoothedPoints);
-                baiduMap.addOverlay(polylineOptions);
+                        .addAll(smoothedPoints);
+                aMap.addPolyline(polylineOptions);
             }
         }
 
@@ -1313,7 +1296,7 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
                 .position(newPoint)
                 .icon(currentIcon)
                 .title("当前位置");
-        baiduMap.addOverlay(currentMarker);
+        aMap.addMarker(currentMarker);
 
         boolean shouldAnimate = lastAnimatedPoint == null;
         if (!shouldAnimate) {
@@ -1322,7 +1305,7 @@ public class MainActivity extends Activity implements WorkoutService.WorkoutUpda
             shouldAnimate = (dLat > 0.0001 || dLng > 0.0001);
         }
         if (shouldAnimate) {
-            baiduMap.animateMapStatus(MapStatusUpdateFactory.newLatLng(newPoint));
+            aMap.animateCamera(CameraUpdateFactory.changeLatLng(newPoint));
             lastAnimatedPoint = newPoint;
         }
     }

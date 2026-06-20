@@ -39,10 +39,11 @@ android {
         }
 
         manifestPlaceholders = [
-            BAIDU_MAP_AK: localProperties.getProperty('BAIDU_MAP_AK', '')
+            AMAP_KEY: localProperties.getProperty('AMAP_KEY', '624314a65582b53d8c53a651f770aabd')
         ]
 
-        resValue "string", "baidu_map_ak", localProperties.getProperty('BAIDU_MAP_AK', '')
+        resValue "string", "amap_key",
+                localProperties.getProperty('AMAP_KEY', '624314a65582b53d8c53a651f770aabd')
     }
 
     buildTypes {
@@ -54,16 +55,18 @@ android {
         }
     }
 
-    packagingOptions {
-        exclude 'META-INF/LICENSE'
-        exclude 'META-INF/DEPENDENCIES'
-        exclude 'META-INF/NOTICE'
+    packaging {
+        resources {
+            excludes += '/META-INF/LICENSE'
+            excludes += '/META-INF/DEPENDENCIES'
+            excludes += '/META-INF/NOTICE'
+        }
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 }
 
 dependencies {
-    implementation 'com.baidu.lbsyun:BaiduMapSDK_Map:8.0.0'
-    implementation 'com.baidu.lbsyun:BaiduMapSDK_Search:8.0.0'
-    implementation 'com.baidu.lbsyun:BaiduMapSDK_Util:8.0.0'
-    implementation 'com.baidu.lbsyun:BaiduMapSDK_Location_All:9.6.8'
+    implementation 'com.amap.api:3dmap:10.0.600'
 }
